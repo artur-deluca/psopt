@@ -1,13 +1,13 @@
 """
-Combination sub-module
+Permutation sub-module
 =====
 
-A particle swarm optimization algorithms used to find the best combination of values
+A particle swarm optimization algorithms used to find the best permutation of values
 
 
 Available
 ---------------------
-CombinationOptimizer
+PermutationOptimizer
 
 """
 

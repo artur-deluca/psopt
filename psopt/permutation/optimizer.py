@@ -8,8 +8,8 @@ import warnings
 
 
 
-class CombinationOptimizer:
-	"""Particle swarm permutation optimizer to find the best combination of candidates
+class PermutationOptimizer:
+	"""Particle swarm permutation optimizer to find the best permutation of candidates
 	
 	Parameters
     ----------
