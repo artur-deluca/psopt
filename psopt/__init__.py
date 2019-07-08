@@ -30,7 +30,7 @@ logging.config.fileConfig(log_file_path)
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['permutation']
+__all__ = ['permutation', 'combination']
 
 for module in __all__:
     try:

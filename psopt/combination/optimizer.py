@@ -9,8 +9,8 @@ from psopt.utils import evaluate_constraints
 
 
 
-class PermutationOptimizer:
-	"""Particle swarm permutation optimizer to find the best permutation of candidates
+class CombinationOptimizer:
+	"""Particle swarm combination optimizer to find the best combination of candidates
 	
 	Parameters
     ----------
@@ -29,15 +29,18 @@ class PermutationOptimizer:
 	
 		>>> candidates = [2,4,5,6,3,1,7]
 
-		>>> # e.g. obj_func([a, b, c, d, e]) ==> a + b/2 + c/3 + d/4 + e/5
-		>>> def obj_func(x): return sum([x[i] / (i+1) for i in range(len(x))])
+		>>> # e.g. obj_func([a, b, c, d, e]) ==> a + b + c + d + e
+		>>> def obj_func(x): return sum(x)
 
-		>>> # constraint: sum of values cannot be greater than 16
-    	>>> constraint = {"fn":sum, "type":">", "value":16}
+		>>> # constraint: sum of values cannot be even
+    	>>> def mod(x): return sum(x) % 2
+    	>>> constraint = {"fn":mod, "type":"==", "value":1}
 
-    	>>> # minimize the obj function
-		>>> opt = PermutationOptimizer(obj_func, candidates, constraints=constraint)
-		>>> sol = opt.minimize(selection_size=5)
+    	>>> threshold=15 # define a threshold of acceptance for early convergence
+
+    	>>> # maximize the obj function
+		>>> opt = CombinationOptimizer(obj_func, candidates, constraints=constraint)
+		>>> sol = opt.maximize(selection_size=5, verbose=True, threshold=threshold)
 
 	"""
 
@@ -83,7 +86,7 @@ class PermutationOptimizer:
 		self._logger.name = __name__
 
 	def maximize(self, selection_size=None, verbose=False, random_state=None, **kwargs):
-		"""Seeks the best permutation of candidates that yields the maximum objective function value
+		"""Seeks the best combination of candidates that yields the maximum objective function value
 
 		Parameters
     	----------
@@ -91,9 +94,6 @@ class PermutationOptimizer:
 				The number of candidates to compose a solution. If not declared, the total number of candidates will be used as the selection size
 			
 			verbose: bool, default False
-
-			random_state: int, default None
-				The seed of a pseudo random number generator
 		
 		Keywords
 		--------
@@ -129,7 +129,7 @@ class PermutationOptimizer:
 		return self._optimize()
 	
 	def minimize(self, selection_size=None, verbose=False, random_state=None, **kwargs):
-		"""Seeks the best permutation of candidates that yields the minimum objective function value
+		"""Seeks the best combination of candidates that yields the minimum objective function value
 		
 		Parameters
     	----------
@@ -137,9 +137,6 @@ class PermutationOptimizer:
 				The number of candidates to compose a solution. If not declared, the total number of candidates will be used as the selection size
 			
 			verbose: bool, default False
-
-			random_state: int, default None
-				The seed of a pseudo random number generator
 		
 		Keywords
 		--------
@@ -190,7 +187,7 @@ class PermutationOptimizer:
 
 		# initialize particles
 		iteration = 0
-		self._particles[-1]["position"] = [self._generate_particles() for i in range(self.swarm_population)]
+		self._particles[-1]["position"] = pool.map(self._generate_particles, list(range(self.swarm_population)))
 		
 		# optimizing
 		while(1 and iteration < self._max_iter):
@@ -227,7 +224,7 @@ class PermutationOptimizer:
 				self._global_best[-2]["position"] = self._global_best[-3]["position"]
 				
 				# it may have the same value and not the same position
-				if (last_best == self._global_best[-2]["position"]).all():
+				if (last_best == self._global_best[-2]["position"]):
 					early_stop_counter += 1
 					if early_stop_counter >= self._early_stop:
 						exit_flag = 1
@@ -253,28 +250,18 @@ class PermutationOptimizer:
 			# velocity clamping
 			self._velocities[self._velocities > self.n_candidates/2] = self.n_candidates/2
 
+			self._probabilities = 1 / (1 + np.exp((- self._velocities)))
 
-			Position = Position + np.round(self._velocities)
+			self._probabilities /= np.sum(self._probabilities, axis=1)[:, None]
 
-			# Boundary Checking for Position
-			Position[Position > self.n_candidates - 1] = self.n_candidates - 1
-			Position[Position < 0] = 0
-
-			for i in range(0, self.swarm_population):
-				if (len(np.unique(Position[i])) != self.selection_size):
-					tempVar = np.random.permutation(self.selection_size)
-					Position[i] = tempVar[0:self.selection_size]
-
-			for i in range(self.swarm_population):
-				self._particles[-1]["position"][i] = Position[i].astype(int)
-
+			self._particles[-1]["position"] = pool.map(self._generate_particles, list(range(self.swarm_population)))
+			
 			if not self.__record and iteration > 2:
 				self._particles.pop(0)
 				self._particles_best.pop(0)
 				self._global_best.pop(0)
-
+			
 			# stop criteria
-
 			unique = np.unique(self._particles[-1]['position'])
 
 			if len(unique) == self.swarm_population - 1:
@@ -290,7 +277,7 @@ class PermutationOptimizer:
 		# store results
 		solution = self._global_best[-2]["position"]
 		solution_value = self._m * self._global_best[-2]["value"]
-		elapsed_time = time.time() - start
+		elapsed_time = time.time() - start  # noqa: F841
 
 		self._exit(exit_flag)
 		
@@ -298,16 +285,16 @@ class PermutationOptimizer:
 			self._logger.info("The algorithm was unable to find a feasible solution")
 
 		self._logger.info("Elapsed time {}".format(elapsed_time))
-		self._logger.info("{} iterations".format(iteration))
-		self._logger.info("Best selection: {}".format([self.labels[i] for i in solution]))
+		self._logger.info("{} iterations".format(iteration+1))
+		self._logger.info("Best selection: {}".format([self.labels[i] for i in range(self.n_candidates) if solution[i] == 1]))
 		self._logger.info("Best evaluation: {}".format(solution_value))
 
-		return solution
+		return self._get_particle(solution)
 
 	def _parallelize_func(self, i):
 		
 		particle = self._get_particle(self._particles[-2]["position"][i])
-
+		
 		evaluation = self._m  * self._obj_func(particle)
 
 		evaluation += self._penalty * (self._m  * evaluate_constraints(self.constraints, particle))
@@ -332,8 +319,6 @@ class PermutationOptimizer:
 
 		self._template_global = {"position": [], "value": -np.inf}
 
-		self._velocities = np.zeros((self.swarm_population, self.selection_size))
-
 		# particles[iteration][position, value][particle]
 		self._particles = [self._template_position]
 
@@ -343,12 +328,22 @@ class PermutationOptimizer:
 		# global_best[iteration][position,value]
 		self._global_best = [self._template_global]
 
-	def _generate_particles(self):
+		# particles's velocities
+		self._velocities = np.zeros((self.swarm_population, self.n_candidates))
 		
-		candidates = np.random.permutation(np.arange(self.n_candidates))
-		candidates = candidates[0:self.selection_size]
+		# selection probabilities
+		self._probabilities = np.ones((self.swarm_population, self.n_candidates)) / self.n_candidates
 
-		return candidates
+	def _generate_particles(self, i):
+		
+		candidates = np.random.choice(
+				[j for j in range(self.n_candidates)],
+				self.selection_size,
+				p=self._probabilities[i],
+				replace=False
+		)
+
+		return [1 if x in candidates else 0 for x in range(self.n_candidates)]
 
 	def _set_params(self, selection_size, f_min, verbose, random_state, **kwargs):
 		
@@ -403,17 +398,16 @@ class PermutationOptimizer:
 			self.w = lambda i: w_input  # noqa: E731
 
 	def _get_particle(self, position):
-		return [self._candidates[x] for x in position]
-	
+		return [self._candidates[x] for x in range(self.n_candidates) if position[x] == 1]
+
 	def _exit(self, flag):
 		
 		exit_flag = {
 			0: "Algortihm reached the maximum limit of {} iterations".format(self._max_iter),
 			1: "Algorithm has not improved for {} consecutive iterations".format(self._early_stop),
-			2: "Algorithm has reached the value threshold of {}".format(self._m * self._threshold),
+			2: "Algorithm has reached the value threshold of {}".format(self._threshold),
 			3: "Particles converged to a single solution"
 		}
-
 		print()
 		self._logger.info("Iteration completed\n==========================")
 		self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
