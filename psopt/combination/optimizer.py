@@ -11,6 +11,8 @@ from psopt.utils import evaluate_constraints
 
 class CombinationOptimizer:
 	"""Particle swarm combination optimizer to find the best combination of candidates
+	Implementation based on:
+		Unler, A. and Murat, A. (2010). A discrete particle swarm optimization method for feature selection in binary classification problems.
 	
 	Parameters
     ----------
@@ -195,8 +197,9 @@ class CombinationOptimizer:
 			self._particles.append(self._template_position)
 			self._particles_best.append(self._template_position)
 			self._global_best.append(self._template_global)
+			self._w = self._update_w(iteration)
 
-			results = pool.map(self._parallelize_func, list(range(self.swarm_population)))
+			results = pool.map(self._multi_obj_func, list(range(self.swarm_population)))
 			results = list(map(list, zip(*results)))
 
 			self._particles[-2]["value"] = np.array(results[0])
@@ -215,7 +218,7 @@ class CombinationOptimizer:
 				self._global_best[-1]["value"] = self._global_best[-2]["value"]
 				self._global_best[-2]["position"] = self._particles_best[-2]["position"][self._particles_best[-2]["value"].argmax()]
 
-				if self._global_best[-2]["value"] > self._threshold:
+				if self._global_best[-2]["value"] >= self._threshold:
 					exit_flag = 2
 					break
 
@@ -237,7 +240,7 @@ class CombinationOptimizer:
 			Position = np.array(self._particles[-2]["position"])
 			
 			# velocities Update
-			self._velocities = self.w(iteration) * self._velocities
+			self._velocities = self._w * self._velocities
 
 			particle_best_comp = self._particles_best[-2]["position"] - Position
 
@@ -291,7 +294,7 @@ class CombinationOptimizer:
 
 		return self._get_particle(solution)
 
-	def _parallelize_func(self, i):
+	def _multi_obj_func(self, i):
 		
 		particle = self._get_particle(self._particles[-2]["position"][i])
 		
@@ -391,11 +394,10 @@ class CombinationOptimizer:
 		try:
 			inertia = tuple(self._w)
 			w_min, w_max = min(inertia), max(inertia)
-			self.w = lambda i: (w_max - ((w_max - w_min) * (i / self._max_iter)))  # noqa: E731
+			self._update_w = lambda i: (w_max - ((w_max - w_min) * (i / self._max_iter)))  # noqa: E731
 		
 		except TypeError:
-			w_input = self._w
-			self.w = lambda i: w_input  # noqa: E731
+			self._update_w = lambda i: self._w  # noqa: E731
 
 	def _get_particle(self, position):
 		return [self._candidates[x] for x in range(self.n_candidates) if position[x] == 1]

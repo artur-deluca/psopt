@@ -11,6 +11,8 @@ from psopt.utils import evaluate_constraints
 
 class PermutationOptimizer:
 	"""Particle swarm permutation optimizer to find the best permutation of candidates
+	Implementation based on:
+		Pan, Q.-K., Fatih Tasgetiren, M., and Liang, Y.-C. (2008). A discrete particle swarm optimization algorithm for the no-wait flowshop scheduling problem.
 	
 	Parameters
     ----------
@@ -30,7 +32,7 @@ class PermutationOptimizer:
 		>>> candidates = [2,4,5,6,3,1,7]
 
 		>>> # e.g. obj_func([a, b, c, d, e]) ==> a + b/2 + c/3 + d/4 + e/5
-		>>> def obj_func(x): return sum([x[i] / (i+1) for i in range(len(x))])
+		>>> def obj_func(x): return sum([a / (i+1) for i, a in enumerate(x)])
 
 		>>> # constraint: sum of values cannot be greater than 16
     	>>> constraint = {"fn":sum, "type":">", "value":16}
@@ -42,10 +44,10 @@ class PermutationOptimizer:
 	"""
 
 	config = {
-			"w": 0.7,
-			"c1": 1.4,
-			"c2": 1.4,
-			"population": 0.4,
+			"w": 0.2,
+			"c1": 0.8,
+			"c2": 0.8,
+			"population": 20,
 			"max_iter": 300,
 			"early_stop": None,
 			"threshold": np.inf,
@@ -190,7 +192,7 @@ class PermutationOptimizer:
 
 		# initialize particles
 		iteration = 0
-		self._particles[-1]["position"] = [self._generate_particles() for i in range(self.swarm_population)]
+		self._particles[-1]["position"] = [self._generate_particles() for _ in range(self.swarm_population)]
 		
 		# optimizing
 		while(1 and iteration < self._max_iter):
@@ -198,8 +200,9 @@ class PermutationOptimizer:
 			self._particles.append(self._template_position)
 			self._particles_best.append(self._template_position)
 			self._global_best.append(self._template_global)
+			self._w = self._update_w(iteration)
 
-			results = pool.map(self._parallelize_func, list(range(self.swarm_population)))
+			results = pool.map(self._multi_obj_func, list(range(self.swarm_population)))
 			results = list(map(list, zip(*results)))
 
 			self._particles[-2]["value"] = np.array(results[0])
@@ -218,7 +221,7 @@ class PermutationOptimizer:
 				self._global_best[-1]["value"] = self._global_best[-2]["value"]
 				self._global_best[-2]["position"] = self._particles_best[-2]["position"][self._particles_best[-2]["value"].argmax()]
 
-				if self._global_best[-2]["value"] > self._threshold:
+				if self._global_best[-2]["value"] >= self._threshold:
 					exit_flag = 2
 					break
 
@@ -237,36 +240,14 @@ class PermutationOptimizer:
 					
 			self._logger.debug('\rIteration %d gbest = %f and iteration best = %f' % (iteration, self._m * self._global_best[-2]["value"], self._m * max(self._particles[-2]["value"])))
 			
-			Position = np.array(self._particles[-2]["position"])
-			
-			# velocities Update
-			self._velocities = self.w(iteration) * self._velocities
-
-			particle_best_comp = self._particles_best[-2]["position"] - Position
-
-			self._velocities += self._c1 * np.random.random(particle_best_comp.shape) * particle_best_comp
-
-			global_best_comp = np.tile(self._global_best[-2]["position"], (self.swarm_population, 1)) - Position
-
-			self._velocities += self._c2 * np.random.random() * global_best_comp
-
-			# velocity clamping
-			self._velocities[self._velocities > self.n_candidates/2] = self.n_candidates/2
-
-
-			Position = Position + np.round(self._velocities)
-
-			# Boundary Checking for Position
-			Position[Position > self.n_candidates - 1] = self.n_candidates - 1
-			Position[Position < 0] = 0
-
-			for i in range(0, self.swarm_population):
-				if (len(np.unique(Position[i])) != self.selection_size):
-					tempVar = np.random.permutation(self.selection_size)
-					Position[i] = tempVar[0:self.selection_size]
+			# update particles position
+			positions = pool.map(self._multi_position, list(range(self.swarm_population)))
+			self._particles[-1]["position"] = positions
 
 			for i in range(self.swarm_population):
-				self._particles[-1]["position"][i] = Position[i].astype(int)
+				if (len(np.unique(self._particles[-1]["position"][i])) != self.selection_size):
+					tempVar = np.random.permutation(self.selection_size)
+					self._particles[-1]["position"][i] = tempVar[0:self.selection_size]
 
 			if not self.__record and iteration > 2:
 				self._particles.pop(0)
@@ -304,7 +285,7 @@ class PermutationOptimizer:
 
 		return solution
 
-	def _parallelize_func(self, i):
+	def _multi_obj_func(self, i):
 		
 		particle = self._get_particle(self._particles[-2]["position"][i])
 
@@ -346,7 +327,7 @@ class PermutationOptimizer:
 	def _generate_particles(self):
 		
 		candidates = np.random.permutation(np.arange(self.n_candidates))
-		candidates = candidates[0:self.selection_size]
+		candidates = candidates[:self.selection_size]
 
 		return candidates
 
@@ -396,15 +377,33 @@ class PermutationOptimizer:
 		try:
 			inertia = tuple(self._w)
 			w_min, w_max = min(inertia), max(inertia)
-			self.w = lambda i: (w_max - ((w_max - w_min) * (i / self._max_iter)))  # noqa: E731
+			self._update_w = lambda i: (w_max - ((w_max - w_min) * (i / self._max_iter)))  # noqa: E731
 		
 		except TypeError:
-			w_input = self._w
-			self.w = lambda i: w_input  # noqa: E731
+			self._update_w = lambda i: self._w  # noqa: E731
 
 	def _get_particle(self, position):
 		return [self._candidates[x] for x in position]
 	
+	def _multi_position(self, i):
+		"""Calculates the new position for each particle in the swarm"""
+		
+		# retrieving positions for the calculation
+		position = np.copy(self._particles[-2]["position"][i])
+		p_best = np.copy(self._particles_best[-2]["position"][i])
+		g_best = np.copy(self._global_best[-2]["position"])
+
+
+		if np.random.random() < self._w:
+			position = self._mutate(position)
+		if np.random.random() < self._c1:
+			position = self._crossover(position, p_best)
+		if np.random.random() < self._c2:
+			position = self._crossover(position, g_best)
+		position = position.astype(int)
+
+		return position
+
 	def _exit(self, flag):
 		
 		exit_flag = {
@@ -417,3 +416,36 @@ class PermutationOptimizer:
 		print()
 		self._logger.info("Iteration completed\n==========================")
 		self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
+
+	def _mutate(self, p):
+		"""Performs a swap mutation with the remaining available itens"""
+		indexes = list(range(len(p)))
+		if len(p) > 1:
+			# get random slice
+			_slice = np.random.permutation(indexes)[:2]
+			start, finish = min(_slice), max(_slice)
+			#p_1 = p[start:finish]
+			p_1 = np.append(p[0:start], p[finish:])
+			p_2 = list(set(list(range(self.n_candidates)))-set(p_1))
+			p[start:finish] = np.random.choice(p_2, size=len(p[start:finish]))
+		return p
+	
+	@staticmethod
+	def _crossover(p_1, p_2):
+		"""Performs the PTL Crossover between two sequences"""
+		indexes = list(range(len(p_1)))
+		if len(p_1) == len(p_2) and len(p_1) > 1:
+			# get random slice from the first array
+			_slice = np.random.permutation(indexes)[:2]
+			start, finish = min(_slice), max(_slice)
+			p_1 = p_1[start:finish]
+
+			# remove from the second array the values found in the slice of the first array
+			
+			p_2 = np.array([x for x in p_2 if x in (set(p_2)-set(p_1))])
+			if len(p_2) + len(p_1) > len(indexes):
+				p_2 = p_2[:len(indexes)-len(p_1)]
+
+			# create the two possible combinations
+			p_1, p_2 = np.append(p_1,p_2), np.append(p_2, p_1)
+		return [p_1, p_2][np.random.randint(0,2)]
