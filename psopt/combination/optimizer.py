@@ -1,7 +1,7 @@
 import logging.config
 import numpy as np
 import os
-import pathos.multiprocessing as multiprocessing
+import multiprocess
 import time
 import warnings
 
@@ -182,7 +182,7 @@ class CombinationOptimizer:
 		exit_flag = 0
 
 		# create pool for parallel processing
-		pool = multiprocessing.Pool()
+		pool = multiprocess.Pool()
 		
 		# initialize "storage" arrays
 		self._init_particles()
