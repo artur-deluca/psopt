@@ -17,7 +17,7 @@ with open("README.md", "r") as fh:
 setup(
     name='psopt',
     packages=find_packages(),
-    version='v0.1.0a3',
+    version='v0.0.1',
     author='Artur de Luca',
     author_email="arturbackdeluca@gmail.com",
     description="A particle swarm optimizer for general use",

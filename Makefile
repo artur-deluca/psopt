@@ -29,6 +29,10 @@ clean:
 	find . -type d -name "__pycache__" -delete
 	find . -type f -name "*.log" -delete
 
+unbuild:
+	rm build/ -r
+	rm dist/ -r
+
 ## Set up python interpreter environment
 create_environment:
 ifeq (True,$(HAS_CONDA))
