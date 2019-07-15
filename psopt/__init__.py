@@ -19,24 +19,9 @@ combination
 
 """
 
-import logging.config
-from os import path
-import sys
-
-log_file_path = path.join(path.dirname(path.abspath(__file__)), 'log.conf')
-
-logging.config.fileConfig(log_file_path)
+import psopt.permutation
+import psopt.combination
+from psopt.utils import make_logger
 
 
-logger = logging.getLogger(__name__)
-
-__all__ = ['permutation', 'combination']
-
-for module in __all__:
-    try:
-        logger.debug('importing submodule: {}'.format('psopt.{}'.format(module)))
-        __import__('psopt.{}'.format(module))
-    except Exception as exception:
-        logger.error('Error importing {}'.format(module), exc_info=True)
-        raise exception
-        #sys.exit(0)
+__all__ = ['make_logger']

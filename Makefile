@@ -29,6 +29,7 @@ clean:
 	find . -type d -name "__pycache__" -delete
 	find . -type f -name "*.log" -delete
 
+## Delete build and dist files
 unbuild:
 	rm build/ -r
 	rm dist/ -r

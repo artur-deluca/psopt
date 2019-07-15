@@ -1,4 +1,3 @@
-import operator
 
 def evaluate_constraints(constraints, candidate):
     phi = 0
