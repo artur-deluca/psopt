@@ -217,16 +217,16 @@ class Optimizer:
 
 	def _multi_obj_func(self, i):
 
-        # Get real values of particle
-        particle = self._get_particle(self._particles[-2]["position"][i])
+		# Get real values of particle
+		particle = self._get_particle(self._particles[-2]["position"][i])
 
 		# Evaluate particle on the objective function
-        evaluation = self._m * self._obj_func(particle)
+		evaluation = self._m * self._obj_func(particle)
 
 		# Add potential penalties caused by constraints' violations
-        evaluation += self._penalty * (self._m * evaluate_constraints(self.constraints, particle))
-	
-	    return evaluation
+		evaluation += self._penalty * (self._m * evaluate_constraints(self.constraints, particle))
+
+		return evaluation
 
 	def _update_global_best(self):
 
