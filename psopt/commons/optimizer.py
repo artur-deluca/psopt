@@ -88,7 +88,8 @@ class Optimizer:
 			solution_value: float
 				The resulting optimization value.
 		"""
-		# setup algorithm parameters
+
+		# Set the algorithm parameters up
 		self._set_params(selection_size=selection_size, f_min=False, verbose=verbose, **kwargs)
 
 		return self._optimize()
@@ -132,7 +133,8 @@ class Optimizer:
 			solution_value: float
 				The resulting optimization value.
 		"""
-		# setup algorithm parameters
+
+		# Set the algorithm parameters up
 		self._set_params(selection_size=selection_size, f_min=True, verbose=verbose, **kwargs)
 
 		return self._optimize()
@@ -144,7 +146,7 @@ class Optimizer:
 		# Create a pool of workers for parallel processing
 		pool = multiprocess.Pool()
 
-		# Initialize "storage" arrays
+		# Initialize storage arrays
 		self._init_particles()
 
 		# Generate particles
@@ -158,12 +160,7 @@ class Optimizer:
 			self._global_best.append(self._template_global.copy())
 			self._w = self._update_w(iteration)
 
-			results = pool.map(self._multi_obj_func, range(self.swarm_population))
-			results = list(map(list, zip(*results)))
-
-			self._particles[-2]["value"] = np.array(results[0])
-			self._particles_best[-2]["value"] = np.array(results[1])
-			self._particles_best[-2]["position"] = results[2]
+			self._particles[-2]["value"] = np.array(pool.map(self._multi_obj_func, range(self.swarm_population)))
 
 			exit_flag = self._update_global_best()
 			if exit_flag:
@@ -181,7 +178,7 @@ class Optimizer:
 			self._update_particles(pool=pool)
 
 			# Record all the iterations for future debugging purposes
-			if not self._record and iteration > 2:
+			if not self._record and iteration > 1:
 				self._particles.pop(0)
 				self._particles_best.pop(0)
 				self._global_best.pop(0)
@@ -220,55 +217,54 @@ class Optimizer:
 
 	def _multi_obj_func(self, i):
 
-		particle = self._get_particle(self._particles[-2]["position"][i])
+        # Get real values of particle
+        particle = self._get_particle(self._particles[-2]["position"][i])
 
-		evaluation = self._m * self._obj_func(particle)
+		# Evaluate particle on the objective function
+        evaluation = self._m * self._obj_func(particle)
 
-		evaluation += self._penalty * (self._m * evaluate_constraints(self.constraints, particle))
-
-		evaluations = np.array([x["value"][i] for x in self._particles[:-1]])
-
-		if evaluation > max(evaluations):
-			best = evaluation
-			best_selection = self._particles[-2]["position"][i]
-		else:
-			best = max(evaluations)
-			best_selection = self._particles[evaluations.argmax()]["position"][i]
-
-		return [evaluation, best, best_selection]
+		# Add potential penalties caused by constraints' violations
+        evaluation += self._penalty * (self._m * evaluate_constraints(self.constraints, particle))
+	
+	    return evaluation
 
 	def _update_global_best(self):
 
-		# for early stopping use
-		last_best = list(self._global_best[-2]["position"])
+		# For early stopping use
+		last_best_position = list(self._global_best[-2]["position"])
 
-		# update Global Best
-		if (self._global_best[-2]["value"] < max(self._particles_best[-2]["value"])):
+		# Temporarily set the best particle values and position as the most recent iteration
+		self._particles_best[-2]["value"] = self._particles[-2]["value"]
+		self._particles_best[-2]["position"] = self._particles[-2]["position"]
 
-			self._early_stop_counter = 0  # clear counter since new global best was found
+		# Get the last 3 particle best values for each particle
+		all_values = np.array([i["value"] for i in self._particles_best[-4:-1]])
 
-			self._global_best[-2]["value"] = max(self._particles_best[-2]["value"])
-			self._global_best[-1]["value"] = self._global_best[-2]["value"]
-			self._global_best[-2]["position"] = self._particles_best[-2]["position"][self._particles_best[-2]["value"].argmax()]
+		# Assign the current particle best value as the maximum of the previous selection
+		self._particles_best[-2]["value"] = all_values.max(axis=0)
+
+		# Assign the corresponding position accordingly
+		self._particles_best[-2]["position"] = [self._particles_best[x]["position"][i] for i, x in enumerate(all_values.argmax(axis=0))]
+
+		# Set the current and next global best values accordingly
+		self._global_best[-2]["value"] = self._particles_best[-2]["value"].max()
+		self._global_best[-2]["position"] = self._particles_best[-2]["position"][self._particles_best[-2]["value"].argmax()]
+		self._global_best[-1]["value"] = self._global_best[-2]["value"]
+
+		# If the best position has been changed
+		if (last_best_position != list(self._global_best[-2]["position"])):
+			self._early_stop_counter = 0  # Clear counter since new global best was found
 
 			if self._global_best[-2]["value"] >= self._threshold:
 				# Set exit flag no.2
 				return 2
-
 		else:
-			self._global_best[-1]["value"] = self._global_best[-2]["value"]
-			self._global_best[-2]["position"] = self._global_best[-3]["position"]
+			self._early_stop_counter += 1
+			if self._early_stop_counter >= self._early_stop:
+				# Set exit flag no.1
+				return 1
 
-			# it may have the same value and not the same position
-			if (last_best == list(self._global_best[-2]["position"])):
-				self._early_stop_counter += 1
-				if self._early_stop_counter >= self._early_stop:
-					# Set exit flag no.1
-					return 1
-			else:
-				early_stop_counter = 0
-
-			return None
+		return None
 
 	def _set_params(self, selection_size, f_min, verbose, **kwargs):
 
