@@ -1,8 +1,9 @@
 import logging
 import os
 
+
 def make_logger(name, verbose):
-    
+
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
@@ -12,7 +13,7 @@ def make_logger(name, verbose):
     if verbose == 1:
         # only set the console handler level
         consoleHandler.setLevel(logging.INFO)
-    
+
     elif verbose == 2:
         # set the console handler level
         consoleHandler.setLevel(logging.INFO)
@@ -25,10 +26,10 @@ def make_logger(name, verbose):
         fileHandler.setLevel(logging.DEBUG)
         fileHandler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         logger.addHandler(fileHandler)
-    
+
     else:
         consoleHandler.setLevel(logging.WARNING)
-    
+
     logger.addHandler(consoleHandler)
 
     return logger

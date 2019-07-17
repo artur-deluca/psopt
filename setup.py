@@ -26,7 +26,7 @@ setup(
     url="https://github.com/artur-deluca/psopt",
     include_package_data=True,
     install_requires=install_requires,
-    
+
     extras_require={
         'dev': dev_requires,
         'all': install_requires + dev_requires

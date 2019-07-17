@@ -3,20 +3,20 @@ from psopt.permutation import PermutationOptimizer as optim
 
 
 def get_route_cost(x, initial_cost, distance_matrix):
-    
+
     # define initial route cost
     route_cost = initial_cost
-    
-    for i in range(len(x)-1):
-        route_cost += distance_matrix[x[i]][x[i+1]]
-    
+
+    for i in range(len(x) - 1):
+        route_cost += distance_matrix[x[i]][x[i + 1]]
+
     return route_cost
 
 
 if __name__ == '__main__':
-    
+
     # define distances between 13 cities
-    # example taken from https://developers.google.com/optimization/routing/tsp
+    # example taken from: [https://developers.google.com/optimization/routing/tsp]
     distance_matrix = [
         [0, 2451, 713, 1018, 1631, 1374, 2408, 213, 2571, 875, 1420, 2145, 1972],
         [2451, 0, 1745, 1524, 831, 1240, 959, 2596, 403, 1589, 1374, 357, 579],
@@ -38,6 +38,6 @@ if __name__ == '__main__':
 
     # instantiate the optimizer
     opt = optim(obj_func, candidates)
-    
+
     # minimize the obj function
-    solution = opt.minimize(verbose=True, max_iter=1000, population=25)
+    solution = opt.minimize(verbose=1, max_iter=100, population=15, early_stop=50)

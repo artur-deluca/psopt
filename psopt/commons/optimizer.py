@@ -1,4 +1,6 @@
+import multiprocess
 import numpy as np
+import time
 import warnings
 
 from psopt.utils import evaluate_constraints, make_logger
@@ -43,12 +45,12 @@ class Optimizer:
 
 		constraints = constraints or []
 
-		if type(constraints) is dict:
+		if isinstance(constraints, dict):
 			self.constraints = [constraints]
 		else:
 			self.constraints = constraints
 
-	def maximize(self, selection_size=None, verbose=False, random_state=None, **kwargs):
+	def maximize(self, selection_size=None, verbose=False, **kwargs):
 		"""Seeks the candidates that yields the maximum objective function value
 
 		Parameters
@@ -58,9 +60,6 @@ class Optimizer:
 
 			verbose: bool, default False
 
-			random_state: int, default None
-				The seed of a pseudo random number generator
-
 		Keywords
 		--------
 			w (inertia): float or sequence (float, float)
@@ -90,11 +89,11 @@ class Optimizer:
 				The resulting optimization value.
 		"""
 		# setup algorithm parameters
-		self._set_params(selection_size=selection_size, f_min=False, verbose=verbose, random_state=random_state, **kwargs)
+		self._set_params(selection_size=selection_size, f_min=False, verbose=verbose, **kwargs)
 
 		return self._optimize()
 
-	def minimize(self, selection_size=None, verbose=False, random_state=None, **kwargs):
+	def minimize(self, selection_size=None, verbose=False, **kwargs):
 		"""Seeks the candidate that yields the minimum objective function value
 
 		Parameters
@@ -104,9 +103,6 @@ class Optimizer:
 
 			verbose: bool, default False
 
-			random_state: int, default None
-				The seed of a pseudo random number generator
-
 		Keywords
 		--------
 			w (inertia): float or sequence (float, float)
@@ -137,12 +133,90 @@ class Optimizer:
 				The resulting optimization value.
 		"""
 		# setup algorithm parameters
-		self._set_params(selection_size=selection_size, f_min=True, verbose=verbose, random_state=random_state, **kwargs)
+		self._set_params(selection_size=selection_size, f_min=True, verbose=verbose, **kwargs)
 
 		return self._optimize()
 
 	def _optimize(self):
-		return
+
+		start = time.time()
+
+		# Create a pool of workers for parallel processing
+		pool = multiprocess.Pool()
+
+		# Initialize "storage" arrays
+		self._init_particles()
+
+		# Generate particles
+		iteration = 0
+		self._particles[-1]["position"] = pool.map(self._generate_particles, range(self.swarm_population))
+
+		# Optimizing
+		while(iteration < self._max_iter):
+			self._particles.append(self._template_position.copy())
+			self._particles_best.append(self._template_position.copy())
+			self._global_best.append(self._template_global.copy())
+			self._w = self._update_w(iteration)
+
+			results = pool.map(self._multi_obj_func, range(self.swarm_population))
+			results = list(map(list, zip(*results)))
+
+			self._particles[-2]["value"] = np.array(results[0])
+			self._particles_best[-2]["value"] = np.array(results[1])
+			self._particles_best[-2]["position"] = results[2]
+
+			exit_flag = self._update_global_best()
+			if exit_flag:
+				break
+
+			# Logging iteration
+			self._logger.info(
+				'Iteration {}: global best = {} and iteration best = {}'.format(
+					iteration,
+					self._m * self._global_best[-2]["value"],
+					self._m * max(self._particles[-2]["value"])
+				)
+			)
+
+			self._update_particles(pool=pool)
+
+			# Record all the iterations for future debugging purposes
+			if not self._record and iteration > 2:
+				self._particles.pop(0)
+				self._particles_best.pop(0)
+				self._global_best.pop(0)
+
+			# Stop criteria
+			unique = np.unique(self._particles[-1]['position'])
+
+			if len(unique) == self.swarm_population - 1:
+				exit_flag = 3
+				break
+			else:
+				iteration += 1
+				continue
+			break  # Break the loop whenever the if clause also breaks
+
+		# Close the pool of workers
+		pool.close()
+		pool.join()
+
+		# Output the exit flag
+		self._exit(exit_flag)
+
+		# Store the results
+		solution = self._global_best[-2]["position"]
+		solution_value = self._m * self._global_best[-2]["value"]
+		elapsed_time = time.time() - start
+
+		if evaluate_constraints(self.constraints, self._get_particle(solution)) > 0:
+			self._logger.info("The algorithm was unable to find a feasible solution with the given parameters")
+
+		self._logger.info("Elapsed time {}".format(elapsed_time))
+		self._logger.info("{} iterations".format(iteration))
+		self._logger.info("Best selection: {}".format(self._get_labels(solution)))
+		self._logger.info("Best evaluation: {}".format(solution_value))
+		return self._get_labels(solution)
 
 	def _multi_obj_func(self, i):
 
@@ -163,67 +237,74 @@ class Optimizer:
 
 		return [evaluation, best, best_selection]
 
-	def _init_particles(self):
+	def _update_global_best(self):
 
-		self._template_position = {
-			"position": [[] for _ in range(self.swarm_population)],
-			"value": [-np.inf for _ in range(self.swarm_population)]
-		}
+		# for early stopping use
+		last_best = list(self._global_best[-2]["position"])
 
-		self._template_global = {"position": [], "value": -np.inf}
+		# update Global Best
+		if (self._global_best[-2]["value"] < max(self._particles_best[-2]["value"])):
 
-		self._velocities = np.zeros((self.swarm_population, self.selection_size))
+			self._early_stop_counter = 0  # clear counter since new global best was found
 
-		# particles[iteration][position, value][particle]
-		self._particles = [self._template_position]
+			self._global_best[-2]["value"] = max(self._particles_best[-2]["value"])
+			self._global_best[-1]["value"] = self._global_best[-2]["value"]
+			self._global_best[-2]["position"] = self._particles_best[-2]["position"][self._particles_best[-2]["value"].argmax()]
 
-		# particles_best[iteration][position, value][particle]
-		self._particles_best = [self._template_position]
+			if self._global_best[-2]["value"] >= self._threshold:
+				# Set exit flag no.2
+				return 2
 
-		# global_best[iteration][position,value]
-		self._global_best = [self._template_global]
+		else:
+			self._global_best[-1]["value"] = self._global_best[-2]["value"]
+			self._global_best[-2]["position"] = self._global_best[-3]["position"]
 
-	def _get_particle(self, particle):
-		return
+			# it may have the same value and not the same position
+			if (last_best == list(self._global_best[-2]["position"])):
+				self._early_stop_counter += 1
+				if self._early_stop_counter >= self._early_stop:
+					# Set exit flag no.1
+					return 1
+			else:
+				early_stop_counter = 0
 
-	def _set_params(self, selection_size, f_min, verbose, random_state, **kwargs):
+			return None
 
-		# set optimizer logger
+	def _set_params(self, selection_size, f_min, verbose, **kwargs):
+
+		# Set optimizer logger
 		self._logger = make_logger(__name__, verbose)
 
-		if random_state:
-			np.random.seed(random_state)
-
-		# record all iterations
+		# Record all iterations
 		self._record = False if "record" not in kwargs else kwargs["record"]
 
-		# transform the maximization problem into a minimization
+		# Transform the maximization problem into a minimization
 		self._m = 1 - 2 * f_min
 
-		# set the selection size
+		# Set the selection size
 		self.selection_size = selection_size if selection_size else self.n_candidates
 
-		# set the swarm and optimization parameters
+		# Set the swarm and optimization parameters
 		for field in __class__.config:
 			if field in kwargs.keys():
 				setattr(self, "_{}".format(field), kwargs[field])
 			else:
 				setattr(self, "_{}".format(field), __class__.config[field])
 
-		# configure acceptable threshold
+		# Configure acceptable threshold
 		if self._threshold != np.inf:
 			self._threshold *= self._m
 
-		# configure early stopping if is None
+		# Configure early stopping if is None
 		self._early_stop = self._early_stop or self._max_iter
 
-		# set the number of particles (population)
+		# Set the number of particles (population)
 		if self._population > 1:
 			self.swarm_population = int(self._population)
 		else:
 			self.swarm_population = int(self.n_candidates * self._population)
 
-		# set the inertia function
+		# Set the inertia function
 		try:
 			w_start, w_finish = tuple(self._w)
 			self._update_w = lambda i: (w_finish - ((w_finish - w_start) * (i / self._max_iter)))  # noqa: E731
@@ -232,6 +313,8 @@ class Optimizer:
 			self._update_w = lambda i: self._w  # noqa: E731
 
 	def _exit(self, flag):
+
+		flag = flag or 0
 
 		exit_flag = {
 			0: "Algortihm reached the maximum limit of {} iterations".format(self._max_iter),
@@ -243,3 +326,15 @@ class Optimizer:
 		print()
 		self._logger.info("Iteration completed\n==========================")
 		self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
+
+	def _init_particles(self):
+		pass
+
+	def _get_particle(self, particle):
+		pass
+
+	def _get_labels(self, position):
+		pass
+
+	def _update_particles(self, **kwargs):
+		pass

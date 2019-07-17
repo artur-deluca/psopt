@@ -7,7 +7,7 @@ from sklearn.datasets import load_breast_cancer
 
 
 if __name__ == '__main__':
-    
+
     # loading breast cancer dataset
     dataset = load_breast_cancer()
 
@@ -19,15 +19,14 @@ if __name__ == '__main__':
 
     # create objective function
     def evaluate(solution):
-        rfc = RFC().fit(train_x[:, solution], train_Y) 
+        rfc = RFC().fit(train_x[:, solution], train_Y)
         return rfc.score(val_x[:, solution], val_Y)
 
     # instantiate optimizer
     opt = optim(evaluate, list(range(train_x.shape[1])), labels=dataset.feature_names)
 
     # maximize obj function
-    solution = opt.maximize(selection_size=15, verbose=True, max_iter=50, random_state=1)
-
+    solution = opt.maximize(selection_size=15, verbose=True, max_iter=50)
 
     # ======================== COMPARISON ========================
 
@@ -38,8 +37,6 @@ if __name__ == '__main__':
     print("All columns:", original.score(val_x, val_Y))
     print("Solution:", optimized.score(val_x[:, solution], val_Y))
 
-
     print("\nTest set accuracy\n--------------------------")
     print("All columns:", original.score(test_x, test_Y))
     print("Solution:", optimized.score(test_x[:, solution], test_Y))
-
