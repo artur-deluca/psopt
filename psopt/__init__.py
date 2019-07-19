@@ -24,4 +24,4 @@ import psopt.combination
 from psopt.utils import make_logger
 
 
-__all__ = ['make_logger']
+__all__ = ["make_logger"]

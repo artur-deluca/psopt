@@ -28,6 +28,7 @@ clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
 	find . -type f -name "*.log" -delete
+	find . -type d -name "*.logs" -print0 | xargs -0 rm -r -f
 
 ## Delete build and dist files
 unbuild:
