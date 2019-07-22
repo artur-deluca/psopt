@@ -178,19 +178,18 @@ class Optimizer:
 				break
 
 			# Logging iteration
-			self._logger.info(
-				'Iteration {}: global best = {:.3f} and iteration best = {:.3f}'.format(
-					iteration,
-					self._m * self._global_best[-2]["value"],
-					self._m * max(self._particles[-2]["value"])
-				)
-			)
+			message = "Iteration {}:\n".format(iteration)
+
+			metric_results = {
+				"global best": self._m * self._global_best[-2]["value"],
+				"iteration best": self._m * max(self._particles[-2]["value"])
+			}
 
 			# log the metric results
-			metric_results = self._calculate_metrics(pool=pool)
-			if metric_results:
-				self._logger.info("".join(["   {}: {:.2f}".format(key, value) for key, value in metric_results.items()]))
-				self._logger.write_metrics(metric_results)
+			metric_results = {**metric_results, **self._calculate_metrics(pool=pool)}
+			message += "".join(["   {}: {:.3f}".format(key, value) for key, value in metric_results.items()])
+			self._logger.info(message)
+			self._logger.write_metrics(metric_results)
 
 			self._update_particles(pool=pool)
 
