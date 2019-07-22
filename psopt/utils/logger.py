@@ -5,9 +5,9 @@ import os
 from datetime import datetime
 
 
-def make_logger(name, verbose, metrics=False):
+def make_logger(name, verbose):
 
-    logger = Metric(name)
+    logger = CustomLogger(name)
     logger.setLevel(logging.DEBUG)
 
     consoleHandler = logging.StreamHandler()
@@ -33,27 +33,26 @@ def make_logger(name, verbose, metrics=False):
     else:
         consoleHandler.setLevel(logging.WARNING)
 
-    if metrics:
-        logger.set_files(os.path.join(os.getcwd(), ".logs"))
+    logger.set_files(os.path.join(os.getcwd(), ".logs"))
 
     logger.addHandler(consoleHandler)
 
     return logger
 
 
-class Metric(logging.Logger):
+class CustomLogger(logging.Logger):
     def __init__(self, name):
         super().__init__(name)
+        self.timestamp = str(datetime.now())
 
     def set_files(self, file_path):
 
-        if file_path:
+        self.file_path = os.path.join(file_path, self.timestamp)
+        os.makedirs(self.file_path, exist_ok=True)
 
-            self.file_path = os.path.join(file_path, self.name)
-            os.makedirs(self.file_path, exist_ok=True)
-
-            self.file_name = os.path.join(self.file_path, "{}.csv".format(datetime.utcnow()))
-            self.file_meta = os.path.join(self.file_path, "{}_meta.json".format(datetime.utcnow()))
+        self.file_name = os.path.join(self.file_path, "results.csv")
+        self.file_meta = os.path.join(self.file_path, "meta.json")
+        self.file_meta = os.path.join(self.file_path, "positions.csv")
 
     def write_metrics(self, dict_values):
         try:
@@ -79,6 +78,24 @@ class Metric(logging.Logger):
                     json.dump(dict_values, json_file, indent=4)
         except AttributeError as err:
             if str(err) == "'Metric' object has no attribute 'file_meta'":
+                pass
+            else:
+                raise err
+
+    def write_positions(self, dict_values):
+        try:
+            file_exists = os.path.isfile(self.file_name)
+
+            with open(self.file_name, "a+") as csv_file:
+
+                writer = csv.DictWriter(csv_file, dict_values.keys())
+
+                if not file_exists:
+                    writer.writeheader()
+                writer.writerow(dict_values)
+
+        except AttributeError as err:
+            if str(err) == "'Metric' object has no attribute 'file_position'":
                 pass
             else:
                 raise err

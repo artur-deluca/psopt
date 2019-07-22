@@ -1,6 +1,5 @@
 import random
 from psopt.permutation import PermutationOptimizer as optim
-from psopt.utils import plot
 
 if __name__ == '__main__':
 
@@ -26,4 +25,5 @@ if __name__ == '__main__':
     # minimize the obj function
     # TODO: return history variable or file_path
 
-    opt.minimize(selection_size=selection_size, verbose=1, threshold=threshold, population=20)
+    result = opt.minimize(selection_size=selection_size, verbose=1, threshold=threshold, population=20)
+    result.history.plot("l2")

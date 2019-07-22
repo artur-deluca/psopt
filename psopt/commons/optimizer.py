@@ -8,6 +8,7 @@ import warnings
 from psopt.utils import make_logger
 from psopt.utils import evaluate_constraints
 from psopt.utils import metrics
+from psopt.utils import Results
 
 
 class Optimizer:
@@ -35,27 +36,25 @@ class Optimizer:
 		"max_iter": 300,
 		"early_stop": None,
 		"threshold": np.inf,
-		"penalty": 1000,
+		"penalty": 100,
 	}
 
-	def __init__(self, obj_func, candidates, constraints=None, labels=None, **kwargs):
+	def __init__(self, obj_func, candidates, constraints=None, **kwargs):
 
 		warnings.filterwarnings("ignore")
 
 		self._candidates = candidates
 		self._obj_func = obj_func
 		self.n_candidates = len(candidates)
-		self.labels = labels or candidates
+		self.labels = kwargs.get("labels", candidates)
+
+		assert(len(self.labels) == self.n_candidates)
+		self.metrics = self._unpack_metrics(kwargs.get("metrics"))
 
 		if isinstance(constraints, dict):
 			self.constraints = [constraints]
 		else:
 			self.constraints = constraints or []
-
-		if "metrics" in kwargs.keys():
-			self.metrics = self._unpack_metric(kwargs["metrics"])
-		else:
-			self.metrics = dict()
 
 	def maximize(self, selection_size=None, verbose=0, **kwargs):
 		"""Seeks the candidates that yields the maximum objective function value
@@ -180,16 +179,18 @@ class Optimizer:
 			# Logging iteration
 			message = "Iteration {}:\n".format(iteration)
 
-			metric_results = {
-				"global best": self._m * self._global_best[-2]["value"],
-				"iteration best": self._m * max(self._particles[-2]["value"])
+			measure_results = {
+				"global_best": self._m * self._global_best[-2]["value"],
+				"iteration_best": self._m * max(self._particles[-2]["value"])
 			}
 
-			# log the metric results
-			metric_results = {**metric_results, **self._calculate_metrics(pool=pool)}
-			message += "".join(["   {}: {:.3f}".format(key, value) for key, value in metric_results.items()])
+			# Log metric results
+			measure_results = {**measure_results, **self._calculate_measures(pool=pool)}
+			message += "".join(
+				["   {}: {:.3f}".format(key.replace("_", " "), value) for key, value in measure_results.items()]
+			)
 			self._logger.info(message)
-			self._logger.write_metrics(metric_results)
+			self._logger.write_metrics(measure_results)
 
 			self._update_particles(pool=pool)
 
@@ -219,29 +220,34 @@ class Optimizer:
 
 		# Store the results
 		meta = self.get_metadata()
-		results = {
-			"solution": list(map(int, self._global_best[-2]["position"])),
+		result_dict = {
+			"solution_index": list(map(int, self._global_best[-2]["position"])),
 			"solution_value": float(self._m * self._global_best[-2]["value"]),
 			"elapsed_time": float("{:.3f}".format(time.time() - start)),
 			"exit_status": exit_flag,
 			"iterations": iteration
 		}
 
-		if evaluate_constraints(self.constraints, self._get_particle(results["solution"])) > 0:
-			results.update({"feasible": False})
-			self._logger.info("The algorithm was unable to find a feasible solution with the given parameters")
+		if evaluate_constraints(self.constraints, self._get_particle(result_dict["solution_index"])) > 0:
+			result_dict.update({"feasible": False})
+			self._logger.warn("The algorithm was unable to find a feasible solution with the given parameters")
 		else:
-			results.update({"feasible": True})
+			result_dict.update({"feasible": True})
 
-		meta.update({"results": results})
-
+		meta["results"] = result_dict
 		self._logger.write_meta(meta)
-		self._logger.info("Elapsed time {}".format(results["elapsed_time"]))
-		self._logger.info("{} iterations".format(iteration))
-		self._logger.info("Best selection: {}".format(self._get_labels(results["solution"])))
-		self._logger.info("Best evaluation: {}".format(results["solution_value"]))
 
-		return self._get_labels(results["solution"])
+		results = Results()
+		results.meta = meta
+		results.load_history(self._logger.file_path)
+		results.solution = self._get_labels(result_dict["solution_index"])
+
+		self._logger.info("Elapsed time {}".format(result_dict["elapsed_time"]))
+		self._logger.info("{} iterations".format(iteration))
+		self._logger.info("Best selection: {}".format(results.solution))
+		self._logger.info("Best evaluation: {}".format(result_dict["solution_value"]))
+
+		return results
 
 	def _multi_obj_func(self, i):
 
@@ -293,24 +299,10 @@ class Optimizer:
 
 		return None
 
-	@staticmethod
-	def _unpack_metric(metric):
-		metric_dict = dict()
-		if isinstance(metric, str):
-			metric_dict.update({metric: metrics.reference[metric]})
-
-		elif inspect.isfunction(metric):
-			metric_dict.update({metric.__name__: metric})
-
-		elif isinstance(metric, list):
-			for item in metric:
-				metric_dict.update(__class__._unpack_metric(item))
-		return metric_dict
-
 	def _set_params(self, selection_size, f_min, verbose, **kwargs):
 
 		# Set optimizer logger
-		self._logger = make_logger(__name__, verbose=verbose, metrics=self.metrics)
+		self._logger = make_logger(__name__, verbose=verbose)
 
 		# Record all iterations
 		self._record = kwargs.get("record", False)
@@ -380,16 +372,20 @@ class Optimizer:
 		self._logger.info("Iteration completed\n==========================")
 		self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
 
-	def _calculate_metrics(self, pool):
+	def _calculate_measures(self, pool):
 
-		metric_results = dict()
+		measure_results = dict()  # set dict to store the results
 		for name, func in self.metrics.items():
+
+			# if the number of parameters is equal 2, partially complete it with the global best at current iteration
 			number_of_param = len(inspect.signature(func).parameters)
 			if number_of_param == 2:
 				func = functools.partial(func, self._global_best[-2]["position"])
-			metric_results[name] = np.mean(pool.map(func, self._particles[-2]["position"]))
 
-		return metric_results
+			# calculate measures
+			measure_results[name] = np.mean(pool.map(func, self._particles[-2]["position"]))
+
+		return measure_results
 
 	def _init_particles(self):
 		pass
@@ -402,3 +398,19 @@ class Optimizer:
 
 	def _update_particles(self, **kwargs):
 		pass
+
+	@staticmethod
+	def _unpack_metrics(selected_metrics):
+		metrics_dict = dict()
+
+		if isinstance(selected_metrics, str):
+			metrics_dict.update({selected_metrics: metrics.reference[selected_metrics]})
+
+		elif inspect.isfunction(selected_metrics):
+			metrics_dict.update({selected_metrics.__name__: selected_metrics})
+
+		elif isinstance(selected_metrics, list):
+			for item in selected_metrics:
+				metrics_dict.update(__class__._unpack_metrics(item))
+
+		return metrics_dict

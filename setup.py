@@ -3,7 +3,8 @@ from setuptools import find_packages, setup
 install_requires = [
     'dill',
     'multiprocess',
-    'numpy'
+    'numpy',
+    'matplotlib'
 ]
 
 dev_requires = [

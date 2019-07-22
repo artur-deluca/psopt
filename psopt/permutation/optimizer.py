@@ -43,9 +43,9 @@ class PermutationOptimizer(Optimizer):
 		"c2": 0.8,
 	}
 
-	def __init__(self, obj_func, candidates, constraints=None, labels=None, **kwargs):
+	def __init__(self, obj_func, candidates, constraints=None, **kwargs):
 		Optimizer.config.update(__class__.config)
-		Optimizer.__init__(self, obj_func=obj_func, candidates=candidates, constraints=constraints, labels=labels, **kwargs)
+		Optimizer.__init__(self, obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs)
 
 	def _init_particles(self):
 
@@ -56,15 +56,13 @@ class PermutationOptimizer(Optimizer):
 
 		self._template_global = {"position": [], "value": -np.inf}
 
-		self._velocities = np.zeros((self.swarm_population, self.selection_size))
-
-		# particles[iteration][position, value][particle]
+		# particles[iteration][position or value][particle]
 		self._particles = [self._template_position.copy()]
 
-		# particles_best[iteration][position, value][particle]
+		# particles_best[iteration][position or value][particle]
 		self._particles_best = [self._template_position.copy()]
 
-		# global_best[iteration][position,value]
+		# global_best[iteration][position or value]
 		self._global_best = [self._template_global.copy()]
 
 	def _update_particles(self, **kwargs):

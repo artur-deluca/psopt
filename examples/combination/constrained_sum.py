@@ -24,4 +24,7 @@ if __name__ == '__main__':
     threshold = 15
 
     # minimize the obj function
-    opt.minimize(selection_size=5, verbose=True, threshold=threshold)
+    results = opt.minimize(selection_size=5, threshold=threshold)
+    print("Solution: ", results.solution)
+
+    results.history.plot("global_best")
