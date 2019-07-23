@@ -7,10 +7,23 @@ import os
 class Results():
 
 	class History(dict):
-		def plot(self, key):
-			plt.plot(self[key])
-			plt.ylabel(key)
-			plt.xlabel("Iteration")
+		def plot(self, y, x=None):
+
+			if isinstance(y, str):
+				y = [y]
+
+			if not x:
+				x = range(len(self[y[0]]))
+				xlabel = "iteration"
+			else:
+				x = self[x]
+				xlabel = x
+
+			for key in y:
+				plt.plot(x, self[key], label=key.replace("_", " "))
+
+			plt.xlabel(xlabel)
+			plt.legend()
 			plt.show()
 
 	def __init__(self, *args, **kwargs):

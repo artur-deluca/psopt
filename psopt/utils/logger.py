@@ -52,7 +52,7 @@ class CustomLogger(logging.Logger):
 
         self.file_name = os.path.join(self.file_path, "results.csv")
         self.file_meta = os.path.join(self.file_path, "meta.json")
-        self.file_meta = os.path.join(self.file_path, "positions.csv")
+        self.file_position = os.path.join(self.file_path, "positions.csv")
 
     def write_metrics(self, dict_values):
         try:
@@ -84,7 +84,7 @@ class CustomLogger(logging.Logger):
 
     def write_positions(self, dict_values):
         try:
-            file_exists = os.path.isfile(self.file_name)
+            file_exists = os.path.isfile(self.file_position)
 
             with open(self.file_name, "a+") as csv_file:
 

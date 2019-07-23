@@ -27,4 +27,4 @@ if __name__ == '__main__':
     results = opt.minimize(selection_size=5, threshold=threshold)
     print("Solution: ", results.solution)
 
-    results.history.plot("global_best")
+    results.history.plot(["global_best", "iteration_best"])
