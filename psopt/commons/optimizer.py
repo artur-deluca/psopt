@@ -48,7 +48,6 @@ class Optimizer:
 		self.n_candidates = len(candidates)
 		self.labels = kwargs.get("labels", candidates)
 
-		assert(len(self.labels) == self.n_candidates)
 		self.metrics = self._unpack_metrics(kwargs.get("metrics"))
 
 		if isinstance(constraints, dict):
@@ -390,7 +389,7 @@ class Optimizer:
 	def _init_particles(self):
 		pass
 
-	def _get_particle(self, particle):
+	def _get_particle(self, position):
 		pass
 
 	def _get_labels(self, position):

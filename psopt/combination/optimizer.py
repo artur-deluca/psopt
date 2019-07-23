@@ -1,9 +1,5 @@
 import numpy as np
-import multiprocess
-import time
-
 from psopt.commons import Optimizer
-from psopt.utils import evaluate_constraints
 
 
 class CombinationOptimizer(Optimizer):
