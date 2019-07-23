@@ -185,7 +185,10 @@ class Optimizer:
 			# Log metric results
 			measure_results = {**measure_results, **self._calculate_measures(pool=pool)}
 			message += "".join(
-				["   {}: {:.3f}".format(key.replace("_", " "), value) for key, value in measure_results.items()]
+				[
+					"   {}: {:.3f}".format(key.replace("_", " "), value)
+					for key, value in measure_results.items()
+				]
 			)
 			self._logger.info(message)
 			self._logger.write_metrics(measure_results)
@@ -217,9 +220,9 @@ class Optimizer:
 		self._exit(exit_flag)
 
 		# Store the results
-		results = Results()
-		results.meta = self.get_metadata()
-		results.meta["results"] = {
+		solution = Results()
+		solution.meta = self.get_metadata()
+		solution.meta["results"] = {
 			"solution_index": list(map(int, self._global_best[-2]["position"])),
 			"solution_value": float(self._m * self._global_best[-2]["value"]),
 			"elapsed_time": float("{:.3f}".format(time.time() - start)),
@@ -227,23 +230,24 @@ class Optimizer:
 			"iterations": iteration
 		}
 
-		if evaluate_constraints(self.constraints, self._get_particle(results.meta["results"]["solution_index"])) > 0:
-			results.meta["results"]["feasible"] = False
+		results = solution.meta["results"]  # For the sake of concision
+		if evaluate_constraints(self.constraints, self._get_particle(results["solution_index"])) > 0:
+			results["feasible"] = False
 			self._logger.warn("The algorithm was unable to find a feasible solution with the given parameters")
 		else:
-			results.meta["results"]["feasible"] = True
+			results["feasible"] = True
 
-		self._logger.write_meta(results.meta)
+		self._logger.write_meta(solution.meta)
 
-		results.load_history(self._logger.file_path)
-		results.solution = self._get_labels(results.meta["results"]["solution_index"])
+		solution.load_history(self._logger.file_path)
+		solution.solution = self._get_labels(results["solution_index"])
 
-		self._logger.info("Elapsed time {}".format(results.meta["results"]["elapsed_time"]))
+		self._logger.info("Elapsed time {}".format(results["elapsed_time"]))
 		self._logger.info("{} iterations".format(iteration))
-		self._logger.info("Best selection: {}".format(results.solution))
-		self._logger.info("Best evaluation: {}".format(results.meta["results"]["solution_value"]))
+		self._logger.info("Best selection: {}".format(solution.solution))
+		self._logger.info("Best evaluation: {}".format(results["solution_value"]))
 
-		return results
+		return solution
 
 	def _multi_obj_func(self, i):
 
@@ -394,5 +398,3 @@ class Optimizer:
 
 	def _update_particles(self, **kwargs):
 		pass
-
-
