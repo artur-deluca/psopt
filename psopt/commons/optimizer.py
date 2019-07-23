@@ -47,8 +47,7 @@ class Optimizer:
 		self._obj_func = obj_func
 		self.n_candidates = len(candidates)
 		self.labels = kwargs.get("labels", candidates)
-
-		self.metrics = self._unpack_metrics(kwargs.get("metrics"))
+		self.metrics = metrics.unpack_metrics(kwargs.get("metrics"))
 
 		if isinstance(constraints, dict):
 			self.constraints = [constraints]
@@ -218,8 +217,9 @@ class Optimizer:
 		self._exit(exit_flag)
 
 		# Store the results
-		meta = self.get_metadata()
-		result_dict = {
+		results = Results()
+		results.meta = self.get_metadata()
+		results.meta["results"] = {
 			"solution_index": list(map(int, self._global_best[-2]["position"])),
 			"solution_value": float(self._m * self._global_best[-2]["value"]),
 			"elapsed_time": float("{:.3f}".format(time.time() - start)),
@@ -227,24 +227,21 @@ class Optimizer:
 			"iterations": iteration
 		}
 
-		if evaluate_constraints(self.constraints, self._get_particle(result_dict["solution_index"])) > 0:
-			result_dict.update({"feasible": False})
+		if evaluate_constraints(self.constraints, self._get_particle(results.meta["results"]["solution_index"])) > 0:
+			results.meta["results"]["feasible"] = False
 			self._logger.warn("The algorithm was unable to find a feasible solution with the given parameters")
 		else:
-			result_dict.update({"feasible": True})
+			results.meta["results"]["feasible"] = True
 
-		meta["results"] = result_dict
-		self._logger.write_meta(meta)
+		self._logger.write_meta(results.meta)
 
-		results = Results()
-		results.meta = meta
 		results.load_history(self._logger.file_path)
-		results.solution = self._get_labels(result_dict["solution_index"])
+		results.solution = self._get_labels(results.meta["results"]["solution_index"])
 
-		self._logger.info("Elapsed time {}".format(result_dict["elapsed_time"]))
+		self._logger.info("Elapsed time {}".format(results.meta["results"]["elapsed_time"]))
 		self._logger.info("{} iterations".format(iteration))
 		self._logger.info("Best selection: {}".format(results.solution))
-		self._logger.info("Best evaluation: {}".format(result_dict["solution_value"]))
+		self._logger.info("Best evaluation: {}".format(results.meta["results"]["solution_value"]))
 
 		return results
 
@@ -398,18 +395,4 @@ class Optimizer:
 	def _update_particles(self, **kwargs):
 		pass
 
-	@staticmethod
-	def _unpack_metrics(selected_metrics):
-		metrics_dict = dict()
 
-		if isinstance(selected_metrics, str):
-			metrics_dict.update({selected_metrics: metrics.reference[selected_metrics]})
-
-		elif inspect.isfunction(selected_metrics):
-			metrics_dict.update({selected_metrics.__name__: selected_metrics})
-
-		elif isinstance(selected_metrics, list):
-			for item in selected_metrics:
-				metrics_dict.update(__class__._unpack_metrics(item))
-
-		return metrics_dict
