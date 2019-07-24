@@ -33,7 +33,7 @@ class Optimizer:
     def __init__(self,
                  obj_func: typing.Callable,
                  candidates: list,
-                 constraints: typing.Optional[typing.Union[Dict, List]],
+                 constraints: typing.Optional[typing.Union[Dict, List]] = None,
                  **kwargs):
 
         warnings.filterwarnings("ignore")
@@ -50,7 +50,7 @@ class Optimizer:
             self.constraints = constraints or []
 
     def maximize(self,
-                 selection_size: typing.Optional[int],
+                 selection_size: typing.Optional[int] = None,
                  verbose: typing.Optional[int] = 0,
                  **kwargs) -> Results:
         """Seeks the solution that yields the maximum objective function value
@@ -92,7 +92,7 @@ class Optimizer:
         return self._optimize()
 
     def minimize(self,
-                 selection_size: typing.Optional[int],
+                 selection_size: typing.Optional[int] = None,
                  verbose: typing.Optional[int] = 0,
                  **kwargs) -> Results:
         """Seeks the solution that yields the minimum objective function value

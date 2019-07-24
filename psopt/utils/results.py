@@ -12,7 +12,7 @@ class Results():
     class _History(dict):
         def plot(self,
                  y: typing.Union[str, typing.List[str]],
-                 x: typing.Optional[str]):
+                 x: typing.Optional[str] = None):
 
             if isinstance(y, str):
                 y = [y]
