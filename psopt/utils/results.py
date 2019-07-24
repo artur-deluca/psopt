@@ -5,29 +5,31 @@ import typing
 
 import matplotlib.pyplot as plt
 
+clsResults = typing.TypeVar("clsResults", bound="Results")
+
 
 class Results():
     """Class to store the optimization results"""
 
     class _History(dict):
         def plot(self,
-                 y: typing.Union[str, typing.List[str]],
-                 x: typing.Optional[str] = None):
+                 y: typing.Union[typing.Text, typing.List[typing.Text]],
+                 x: typing.Optional[typing.Text] = None):
 
             if isinstance(y, str):
                 y = [y]
 
             if not x:
-                x = range(len(self[y[0]]))
-                xlabel = "iteration"
+                x_values = range(len(self[y[0]]))
+                x = "iteration"
             else:
-                x = self[x]
-                xlabel = x
+                x_values = self[x]
+                x = x
 
             for key in y:
-                plt.plot(x, self[key], label=key.replace("_", " "))
+                plt.plot(x_values, self[key], label=key.replace("_", " "))
 
-            plt.xlabel(xlabel)
+            plt.xlabel(x)
             plt.legend()
             plt.show()
 
@@ -36,9 +38,9 @@ class Results():
         self.meta = dict()
         self.solution = None
 
-    def load_meta(self, directory: str):
+    def load_meta(self, directory: typing.Text):
         """Loads a .json metafile and stores it in the Result.meta attribute
-        
+
         Args:
             directory: str containing the path to file
         """
@@ -47,8 +49,9 @@ class Results():
             temp_dict = json.load(_file)
             self.meta.update(temp_dict)
 
-    def load_history(self, directory: str):
-        """Loads a .csv containing the progress of an optimization process and stores it in the Result.history attribute
+    def load_history(self, directory: typing.Text):
+        """Loads a .csv containing the progress of an optimization process
+        and stores it in the Result.history attribute
 
         Args:
             directory: str containing the path to file
@@ -63,7 +66,10 @@ class Results():
             self.history.update(temp_dict)
 
     @classmethod
-    def from_folder(cls, directory: str):
+    def from_folder(
+        cls: typing.Type[clsResults],
+        directory: typing.Text
+    ) -> clsResults:
         """Instantiates Result object from files within the directory
 
         Args:

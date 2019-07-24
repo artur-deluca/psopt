@@ -1,8 +1,8 @@
 import random
 from psopt.permutation import Permutation as optim
 
-if __name__ == "__main__":
 
+def main():
     # define objective function: f([a, b, c, ...]) = a/1 + b/2 + c/3 + ...
     def obj_func(x):
         return sum([a / (i + 1) for i, a in enumerate(x)])
@@ -25,3 +25,7 @@ if __name__ == "__main__":
     # minimize the obj function
     result = opt.minimize(selection_size=selection_size, verbose=1, threshold=threshold, population=20)
     result.history.plot("l2")
+
+
+if __name__ == "__main__":
+    main()

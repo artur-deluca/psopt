@@ -1,14 +1,13 @@
 from psopt.combination import Combination as optim
 
-# to run this, do not forget to install scikit-learn
+# to run this, make sure to have scikit-learn installed
 from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_validate as cv
 from sklearn.datasets import load_breast_cancer
 
 
-if __name__ == "__main__":
-
+def main():
     # loading breast cancer dataset
     dataset = load_breast_cancer()
 
@@ -34,6 +33,10 @@ if __name__ == "__main__":
     original = RFC().fit(train_x, train_Y)
     optimized = RFC().fit(train_x[:, solution], train_Y)
 
-    print("\nTest set accuracy\n--------------------------")
+    print("\nTest accuracy\n--------------------------")
     print("All columns:", original.score(test_x, test_Y))
     print("Solution:", optimized.score(test_x[:, solution], test_Y))
+
+
+if __name__ == "__main__":
+    main()

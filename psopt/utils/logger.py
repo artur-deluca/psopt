@@ -10,11 +10,11 @@ from datetime import datetime
 class CustomLogger(logging.Logger):
     """Logger class that outputs .csv metrics logs and .json metafiles"""
 
-    def __init__(self, name: str):
+    def __init__(self, name: typing.Text):
         super().__init__(name)
         self.timestamp = str(datetime.now())
 
-    def set_files(self, file_path: str):
+    def set_files(self, file_path: typing.Text):
 
         self.file_path = os.path.join(file_path, self.timestamp)
         os.makedirs(self.file_path, exist_ok=True)
@@ -33,8 +33,8 @@ class CustomLogger(logging.Logger):
         with open(self.file_meta, "a+") as json_file:
                 json.dump(values, json_file, indent=4)
 
-    def _write_csv(self,
-                   path: str,
+    @staticmethod
+    def _write_csv(path: typing.Text,
                    values: dict):
 
         file_exists = os.path.isfile(path)
@@ -48,7 +48,7 @@ class CustomLogger(logging.Logger):
             writer.writerow(values)
 
 
-def make_logger(name: str,
+def make_logger(name: typing.Text,
                 verbose: typing.Union[int, bool]) -> CustomLogger:
 
     logger = CustomLogger(name)
@@ -71,7 +71,11 @@ def make_logger(name: str,
         # add fileHandler in logger
         fileHandler = logging.FileHandler(".logs/logging.log")
         fileHandler.setLevel(logging.DEBUG)
-        fileHandler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+        fileHandler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+        )
         logger.addHandler(fileHandler)
 
     else:

@@ -22,10 +22,13 @@ def l2(source, target):
 # =============================================================
 
 reference = dict(inspect.getmembers(sys.modules[__name__], inspect.isfunction))
-M = typing.Union[str, typing.Callable, typing.List]
+M = typing.Union[typing.Text, typing.Callable, typing.List]
 
 
-def unpack_metrics(selected_metrics: M) -> typing.Dict[str, typing.Callable]:
+def unpack_metrics(
+    selected_metrics: M
+) -> typing.Dict[typing.Text, typing.Callable]:
+
     metrics_dict = dict()
 
     if isinstance(selected_metrics, str):

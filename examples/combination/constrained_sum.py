@@ -1,8 +1,8 @@
 import random
 from psopt.combination import Combination as optim
 
-if __name__ == "__main__":
 
+def main():
     # define objective function: f([a, b, c, ...]) = a + b + c + ...
     def obj_func(x):
         return sum(x)
@@ -28,3 +28,7 @@ if __name__ == "__main__":
     print("Solution: ", results.solution)
 
     results.history.plot(["global_best", "iteration_best"])
+
+
+if __name__ == "__main__":
+    main()

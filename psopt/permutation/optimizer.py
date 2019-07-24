@@ -10,15 +10,19 @@ class Permutation(Optimizer):
 
     Implementation based on:
         Pan, Q.-K., Fatih Tasgetiren, M., and Liang, Y.-C. (2008)
-        A discrete particle swarm optimization algorithm for the no-wait flowshop scheduling problem.
+            A discrete particle swarm optimization algorithm for
+            the no-wait flowshop scheduling problem.
 
     Args:
-        obj_func: objective function (or method) to be optimized. Must only accept the candidates as input.
-            If the inherited structure does not allow it, use `functools.partial` to comply
+        obj_func: objective function (or method) to be optimized.
+            Must only accept the candidates as input.
+            If the inherited structure does not allow it,
+            use `functools.partial` to comply
 
         candidates: list of available candidates to the objective function
 
-        constraints: function or list of functions to limit the feasible solution space
+        constraints: function or list of functions to limit
+            the feasible solution space
 
     Returns:
         Permutation optimizer object
@@ -43,32 +47,22 @@ class Permutation(Optimizer):
         "w": 0.2,
         "c1": 0.8,
         "c2": 0.8,
-    }
+    }  # type typing.Dict[typing.Text, typing.Any]
 
     def __init__(self, obj_func, candidates, constraints=None, **kwargs):
-        Optimizer.config.update(__class__.config)
-        Optimizer.__init__(self, obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs)
-
-    def _init_particles(self):
-
-        self._template_position = {
-            "position": [[] for _ in range(self.swarm_population)],
-            "value": [-np.inf for _ in range(self.swarm_population)]
-        }
-
-        self._template_global = {"position": [], "value": -np.inf}
-
-        # particles[iteration][position or value][particle]
-        self._particles = [self._template_position.copy()]
-
-        # particles_best[iteration][position or value][particle]
-        self._particles_best = [self._template_position.copy()]
-
-        # global_best[iteration][position or value]
-        self._global_best = [self._template_global.copy()]
+        super().config.update(__class__.config)
+        super().__init__(obj_func=obj_func,
+                         candidates=candidates,
+                         constraints=constraints,
+                         **kwargs)
 
     def _update_particles(self, **kwargs):
-        self._particles[-1]["position"] = kwargs["pool"].map(self._multi_position, list(range(self.swarm_population)))
+        self._particles[-1]["position"] = (
+            kwargs["pool"].map(
+                self._multi_position,
+                list(range(self.swarm_population))
+            )
+        )
 
     def _generate_particles(self, i):
 
@@ -103,7 +97,9 @@ class Permutation(Optimizer):
         position = position.astype(int)
 
         if (len(np.unique(position)) != self.selection_size):
-            self._logger.warning("Particle with repeated items, re-initializing it")
+            self._logger.warning(
+                "Particle with repeated items, re-initializing it"
+            )
             position = self._generate_particles(0)
         return position
 
@@ -115,7 +111,11 @@ class Permutation(Optimizer):
             start, finish = min(_slice), max(_slice)
             p_1 = np.append(p[0:start], p[finish:])
             p_2 = list(set(range(self.n_candidates)) - set(p_1))
-            p[start:finish] = np.random.choice(p_2, size=len(p[start:finish]), replace=False)
+            p[start:finish] = np.random.choice(
+                p_2,
+                size=len(p[start:finish]),
+                replace=False
+            )
         return p
 
     @staticmethod
@@ -129,7 +129,8 @@ class Permutation(Optimizer):
             start, finish = min(_slice), max(_slice)
             p_1 = p_1[start:finish]
 
-            # remove from the second array the values found in the slice of the first array
+            # remove from the second array the values found in
+            # the slice of the first array
 
             p_2 = np.array([x for x in p_2 if x in (set(p_2) - set(p_1))])
             if len(p_2) + len(p_1) > len(indexes):

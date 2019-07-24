@@ -10,15 +10,19 @@ class Combination(Optimizer):
 
     Implementation based on:
         Unler, A. and Murat, A. (2010).
-        A discrete particle swarm optimization method for feature selection in binary classification problems.
+            A discrete particle swarm optimization method for
+            feature selection in binary classification problems.
 
     Args:
-        obj_func: objective function (or method) to be optimized. Must only accept the candidates as input.
-            If the inherited structure does not allow it, use `functools.partial` to comply
+        obj_func: objective function (or method) to be optimized.
+            Must only accept the candidates as input.
+            If the inherited structure does not allow it,
+            use `functools.partial` to comply
 
         candidates: list of available candidates to the objective function
 
-        constraints: function or list of functions to limit the feasible solution space
+        constraints: function or list of functions to limit
+            the feasible solution space
 
     Returns:
         Combination optimizer object
@@ -34,11 +38,12 @@ class Combination(Optimizer):
         >>> def mod(x): return sum(x) % 2
         >>> constraint = {"fn":mod, "type":"==", "value":1}
 
-        >>> threshold=15 # define a threshold of acceptance for early convergence
+        >>> # define a threshold of acceptance for early convergence
+        >>> limit=15
 
         >>> # maximize the obj function
         >>> opt = Combination(obj_func, candidates, constraints=constraint)
-        >>> sol = opt.maximize(selection_size=5, verbose=True, threshold=threshold)
+        >>> sol = opt.maximize(selection_size=5, verbose=True, threshold=limit)
 
     """
 
@@ -46,35 +51,27 @@ class Combination(Optimizer):
         "w": 0.7,
         "c1": 1.4,
         "c2": 1.4,
-    }
+    }  # type typing.Dict[typing.Text, typing.Any]
 
     def __init__(self, obj_func, candidates, constraints=None, **kwargs):
-        Optimizer.config.update(__class__.config)
-        Optimizer.__init__(self, obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs)
+        super().config.update(__class__.config)
+        super().__init__(obj_func=obj_func,
+                         candidates=candidates,
+                         constraints=constraints,
+                         **kwargs)
 
     def _init_particles(self):
 
-        self._template_position = {
-            "position": [[] for _ in range(self.swarm_population)],
-            "value": [-np.inf for _ in range(self.swarm_population)]
-        }
-
-        self._template_global = {"position": [], "value": -np.inf}
-
-        # particles[iteration][position or value][particle]
-        self._particles = [self._template_position.copy()]
-
-        # particles_best[iteration][position or value][particle]
-        self._particles_best = [self._template_position.copy()]
-
-        # global_best[iteration][position or value]
-        self._global_best = [self._template_global.copy()]
+        super()._init_particles()
 
         # particles's velocities
         self._velocities = np.zeros((self.swarm_population, self.n_candidates))
 
         # selection probabilities
-        self._probabilities = np.ones((self.swarm_population, self.n_candidates)) / self.n_candidates
+        self._probabilities = (
+            np.ones((self.swarm_population, self.n_candidates))
+            / self.n_candidates
+         )
 
     def _generate_particles(self, i: int) -> typing.List[int]:
 
@@ -97,23 +94,48 @@ class Combination(Optimizer):
 
         particle_best_comp = self._particles_best[-2]["position"] - position
 
-        self._velocities += self._c1 * np.random.random(particle_best_comp.shape) * particle_best_comp
+        self._velocities += (
+            self._c1 *
+            np.random.random(particle_best_comp.shape) *
+            particle_best_comp
+        )
 
-        global_best_comp = np.tile(self._global_best[-2]["position"], (self.swarm_population, 1)) - position
+        global_best_comp = (
+            np.tile(
+                self._global_best[-2]["position"],
+                (self.swarm_population, 1)
+            )
+            - position
+        )
 
-        self._velocities += self._c2 * np.random.random() * global_best_comp
+        self._velocities += (
+            self._c2 *
+            np.random.random() *
+            global_best_comp
+        )
 
         # velocity clamping
-        self._velocities[self._velocities > self.n_candidates / 2] = self.n_candidates / 2
+        self._velocities[self._velocities > self.n_candidates / 2] = (
+            self.n_candidates / 2
+        )
 
         self._probabilities = 1 / (1 + np.exp((- self._velocities)))
 
         self._probabilities /= np.sum(self._probabilities, axis=1)[:, None]
 
-        self._particles[-1]["position"] = kwargs["pool"].map(self._generate_particles, list(range(self.swarm_population)))
+        self._particles[-1]["position"] = (
+            kwargs["pool"].map(
+                self._generate_particles,
+                list(range(self.swarm_population))
+            )
+        )
 
     def _get_particle(self, position):
-        return [self._candidates[x] for x in range(self.n_candidates) if position[x] == 1]
+        return [self._candidates[x]
+                for x in range(self.n_candidates)
+                if position[x] == 1]
 
     def _get_labels(self, position):
-        return [self.labels[x] for x in range(self.n_candidates) if position[x] == 1]
+        return [self.labels[x]
+                for x in range(self.n_candidates)
+                if position[x] == 1]

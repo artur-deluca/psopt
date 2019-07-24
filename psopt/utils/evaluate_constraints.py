@@ -1,6 +1,6 @@
 import typing
 
-Dict = typing.Dict[str, typing.Any]
+Dict = typing.Dict[typing.Text, typing.Any]
 List = typing.List[Dict]
 Candidate = typing.List[int]
 

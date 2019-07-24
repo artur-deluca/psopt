@@ -13,8 +13,7 @@ def get_route_cost(x, initial_cost, distance_matrix):
     return route_cost
 
 
-if __name__ == "__main__":
-
+def main():
     # define distances between 13 cities
     # example taken from: [https://developers.google.com/optimization/routing/tsp]
     distance_matrix = [
@@ -41,3 +40,8 @@ if __name__ == "__main__":
 
     # minimize the obj function
     solution = opt.minimize(verbose=1, max_iter=100, population=15, early_stop=50)
+    print(solution.solution)
+
+
+if __name__ == "__main__":
+    main()
