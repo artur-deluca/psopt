@@ -1,7 +1,7 @@
 import random
-from psopt.permutation import PermutationOptimizer as optim
+from psopt.permutation import Permutation as optim
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # define objective function: f([a, b, c, ...]) = a/1 + b/2 + c/3 + ...
     def obj_func(x):

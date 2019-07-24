@@ -1,5 +1,5 @@
 import functools
-from psopt.permutation import PermutationOptimizer as optim
+from psopt.permutation import Permutation as optim
 
 
 def get_route_cost(x, initial_cost, distance_matrix):
@@ -13,7 +13,7 @@ def get_route_cost(x, initial_cost, distance_matrix):
     return route_cost
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # define distances between 13 cities
     # example taken from: [https://developers.google.com/optimization/routing/tsp]

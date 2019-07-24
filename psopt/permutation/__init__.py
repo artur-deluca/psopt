@@ -7,7 +7,7 @@ A particle swarm optimization algorithms used to find the best permutation of va
 
 Available
 ---------------------
-PermutationOptimizer
+Permutation
 
 """
 from .optimizer import *

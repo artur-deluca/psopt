@@ -1,11 +1,55 @@
 import csv
-import logging
 import json
+import logging
 import os
+import typing
+
 from datetime import datetime
 
 
-def make_logger(name, verbose):
+class CustomLogger(logging.Logger):
+    """Logger class that outputs .csv metrics logs and .json metafiles"""
+
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.timestamp = str(datetime.now())
+
+    def set_files(self, file_path: str):
+
+        self.file_path = os.path.join(file_path, self.timestamp)
+        os.makedirs(self.file_path, exist_ok=True)
+
+        self.file_results = os.path.join(self.file_path, "results.csv")
+        self.file_meta = os.path.join(self.file_path, "meta.json")
+        self.file_position = os.path.join(self.file_path, "positions.csv")
+
+    def write_metrics(self, values: dict):
+        self._write_csv(self.file_results, values)
+
+    def write_positions(self, values: dict):
+        self._write_csv(self.file_position, values)
+
+    def write_meta(self, values: dict):
+        with open(self.file_meta, "a+") as json_file:
+                json.dump(values, json_file, indent=4)
+
+    def _write_csv(self,
+                   path: str,
+                   values: dict):
+
+        file_exists = os.path.isfile(path)
+
+        with open(path, "a+") as csv_file:
+
+            writer = csv.DictWriter(csv_file, values.keys())
+
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(values)
+
+
+def make_logger(name: str,
+                verbose: typing.Union[int, bool]) -> CustomLogger:
 
     logger = CustomLogger(name)
     logger.setLevel(logging.DEBUG)
@@ -38,39 +82,3 @@ def make_logger(name, verbose):
     logger.addHandler(consoleHandler)
 
     return logger
-
-
-class CustomLogger(logging.Logger):
-    def __init__(self, name):
-        super().__init__(name)
-        self.timestamp = str(datetime.now())
-
-    def set_files(self, file_path):
-
-        self.file_path = os.path.join(file_path, self.timestamp)
-        os.makedirs(self.file_path, exist_ok=True)
-
-        self.file_results = os.path.join(self.file_path, "results.csv")
-        self.file_meta = os.path.join(self.file_path, "meta.json")
-        self.file_position = os.path.join(self.file_path, "positions.csv")
-
-    def write_metrics(self, dict_values):
-        self._write_csv(self.file_results, dict_values)
-
-    def write_positions(self, dict_values):
-        self._write_csv(self.file_position, dict_values)
-
-    def write_meta(self, dict_values):
-        with open(self.file_meta, "a+") as json_file:
-                json.dump(dict_values, json_file, indent=4)
-
-    def _write_csv(self, path, dict_values):
-        file_exists = os.path.isfile(path)
-
-        with open(path, "a+") as csv_file:
-
-            writer = csv.DictWriter(csv_file, dict_values.keys())
-
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(dict_values)

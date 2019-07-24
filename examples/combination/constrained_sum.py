@@ -1,7 +1,7 @@
 import random
-from psopt.combination import CombinationOptimizer as optim
+from psopt.combination import Combination as optim
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # define objective function: f([a, b, c, ...]) = a + b + c + ...
     def obj_func(x):

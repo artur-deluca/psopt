@@ -1,4 +1,4 @@
-from psopt.combination import CombinationOptimizer as optim
+from psopt.combination import Combination as optim
 
 # to run this, do not forget to install scikit-learn
 from sklearn.ensemble import RandomForestClassifier as RFC
@@ -7,7 +7,7 @@ from sklearn.model_selection import cross_validate as cv
 from sklearn.datasets import load_breast_cancer
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # loading breast cancer dataset
     dataset = load_breast_cancer()
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # create objective function
     def evaluate(solution):
         results = cv(RFC(n_estimators=10), train_x[:, solution], train_Y, cv=3)
-        return results['test_score'].mean()
+        return results["test_score"].mean()
 
     # instantiate optimizer
     opt = optim(evaluate, list(range(train_x.shape[1])), labels=dataset.feature_names)

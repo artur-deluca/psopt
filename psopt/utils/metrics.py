@@ -1,8 +1,12 @@
-import numpy as np
 import inspect
 import sys
+import typing
 
-# =============== Built-in metrics ===============
+import numpy as np
+
+# =============================================================
+#                      Built-in metrics
+# =============================================================
 
 
 def hamming(source, target):
@@ -13,12 +17,15 @@ def l2(source, target):
     return np.linalg.norm(np.array(source) - np.array(target))
 
 
-# =============== Helper structure ===============
+# =============================================================
+#                       Helper structure
+# =============================================================
 
 reference = dict(inspect.getmembers(sys.modules[__name__], inspect.isfunction))
+M = typing.Union[str, typing.Callable, typing.List]
 
 
-def unpack_metrics(selected_metrics):
+def unpack_metrics(selected_metrics: M) -> typing.Dict[str, typing.Callable]:
     metrics_dict = dict()
 
     if isinstance(selected_metrics, str):

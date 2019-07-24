@@ -1,7 +1,7 @@
 import random
-from psopt.permutation import PermutationOptimizer as optim
+from psopt.permutation import Permutation as optim
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # define objective function: f([a, b, c, ...]) = a/1 + b/2 + c/3 + ...
     def obj_func(x):
@@ -17,13 +17,11 @@ if __name__ == '__main__':
     constraint = {"fn": sum, "type": ">", "value": sum(sorted(candidates)[:selection_size]) + 1}
 
     # instantiate the optimizer
-    opt = optim(obj_func, candidates, constraints=constraint, metrics="l2")
+    opt = optim(obj_func, dict(zip(candidates, candidates)), constraints=constraint, metrics="l2")
 
     # define a threshold of acceptance for early convergence
     threshold = obj_func(sorted(candidates)[:selection_size])
 
     # minimize the obj function
-    # TODO: return history variable or file_path
-
     result = opt.minimize(selection_size=selection_size, verbose=1, threshold=threshold, population=20)
     result.history.plot("l2")

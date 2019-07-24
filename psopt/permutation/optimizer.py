@@ -1,137 +1,140 @@
+import typing
+
 import numpy as np
+
 from psopt.commons import Optimizer
 
 
-class PermutationOptimizer(Optimizer):
-	"""Particle swarm permutation optimizer to find the best permutation of candidates
-	Implementation based on:
-		Pan, Q.-K., Fatih Tasgetiren, M., and Liang, Y.-C. (2008)
-		A discrete particle swarm optimization algorithm for the no-wait flowshop scheduling problem.
+class Permutation(Optimizer):
+    """Solver to find an optimal permutation of candidates
 
-	Parameters
-	----------
-		obj_func: function
-			objective function to be optimized. Must only accept the candidates as input.
-			If the inherited structure does not allow it, use `functools.partial` to create partial functions
+    Implementation based on:
+        Pan, Q.-K., Fatih Tasgetiren, M., and Liang, Y.-C. (2008)
+        A discrete particle swarm optimization algorithm for the no-wait flowshop scheduling problem.
 
-		candidates: list
-			list of inputs to pass to the objective function
+    Args:
+        obj_func: objective function (or method) to be optimized. Must only accept the candidates as input.
+            If the inherited structure does not allow it, use `functools.partial` to comply
 
-		constraints: function or sequence of functions, optional
-			functions to limit the feasible solution space
+        candidates: list of available candidates to the objective function
 
-	Example
-	-------
+        constraints: function or list of functions to limit the feasible solution space
 
-		>>> candidates = [2,4,5,6,3,1,7]
+    Returns:
+        Permutation optimizer object
 
-		>>> # e.g. obj_func([a, b, c, d, e]) ==> a + b/2 + c/3 + d/4 + e/5
-		>>> def obj_func(x): return sum([a / (i+1) for i, a in enumerate(x)])
+    Example:
 
-		>>> # constraint: sum of values cannot be greater than 16
-		>>> constraint = {"fn":sum, "type":">", "value":16}
+        >>> candidates = [2,4,5,6,3,1,7]
 
-		>>> # minimize the obj function
-		>>> opt = PermutationOptimizer(obj_func, candidates, constraints=constraint)
-		>>> sol = opt.minimize(selection_size=5)
+        >>> # e.g. obj_func([a, b, c, d, e]) ==> a + b/2 + c/3 + d/4 + e/5
+        >>> def obj_func(x): return sum([a / (i+1) for i, a in enumerate(x)])
 
-	"""
+        >>> # constraint: sum of values cannot be greater than 16
+        >>> constraint = {"fn":sum, "type":">", "value":16}
 
-	config = {
-		"w": 0.2,
-		"c1": 0.8,
-		"c2": 0.8,
-	}
+        >>> # minimize the obj function
+        >>> opt = Permutation(obj_func, candidates, constraints=constraint)
+        >>> sol = opt.minimize(selection_size=5)
 
-	def __init__(self, obj_func, candidates, constraints=None, **kwargs):
-		Optimizer.config.update(__class__.config)
-		Optimizer.__init__(self, obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs)
+    """
 
-	def _init_particles(self):
+    config = {
+        "w": 0.2,
+        "c1": 0.8,
+        "c2": 0.8,
+    }
 
-		self._template_position = {
-			"position": [[] for _ in range(self.swarm_population)],
-			"value": [-np.inf for _ in range(self.swarm_population)]
-		}
+    def __init__(self, obj_func, candidates, constraints=None, **kwargs):
+        Optimizer.config.update(__class__.config)
+        Optimizer.__init__(self, obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs)
 
-		self._template_global = {"position": [], "value": -np.inf}
+    def _init_particles(self):
 
-		# particles[iteration][position or value][particle]
-		self._particles = [self._template_position.copy()]
+        self._template_position = {
+            "position": [[] for _ in range(self.swarm_population)],
+            "value": [-np.inf for _ in range(self.swarm_population)]
+        }
 
-		# particles_best[iteration][position or value][particle]
-		self._particles_best = [self._template_position.copy()]
+        self._template_global = {"position": [], "value": -np.inf}
 
-		# global_best[iteration][position or value]
-		self._global_best = [self._template_global.copy()]
+        # particles[iteration][position or value][particle]
+        self._particles = [self._template_position.copy()]
 
-	def _update_particles(self, **kwargs):
-		self._particles[-1]["position"] = kwargs['pool'].map(self._multi_position, list(range(self.swarm_population)))
+        # particles_best[iteration][position or value][particle]
+        self._particles_best = [self._template_position.copy()]
 
-	def _generate_particles(self, i):
+        # global_best[iteration][position or value]
+        self._global_best = [self._template_global.copy()]
 
-		np.random.seed()
-		candidates = np.random.permutation(np.arange(self.n_candidates))
-		candidates = candidates[:self.selection_size]
+    def _update_particles(self, **kwargs):
+        self._particles[-1]["position"] = kwargs["pool"].map(self._multi_position, list(range(self.swarm_population)))
 
-		return candidates
+    def _generate_particles(self, i):
 
-	def _get_particle(self, position):
-		return [self._candidates[x] for x in position]
+        np.random.seed()
+        candidates = np.random.permutation(np.arange(self.n_candidates))
+        candidates = candidates[:self.selection_size]
 
-	def _get_labels(self, position):
-		return [self.labels[i] for i in position]
+        return candidates
 
-	def _multi_position(self, i):
-		"""Calculates the new position for each particle in the swarm"""
-		np.random.seed()
+    def _get_particle(self, position: typing.List[int]):
+        return [self._candidates[x] for x in position]
 
-		# retrieving positions for the calculation
-		position = self._particles[-2]["position"][i]
-		p_best = self._particles_best[-2]["position"][i]
-		g_best = self._global_best[-2]["position"]
+    def _get_labels(self, position: typing.List[int]):
+        return [self.labels[i] for i in position]
 
-		if np.random.random() < self._w:
-			position = self._mutate(position)
-		if np.random.random() < self._c1:
-			position = self._crossover(position, p_best)
-		if np.random.random() < self._c2:
-			position = self._crossover(position, g_best)
+    def _multi_position(self, i: int):
+        """Calculates the new position for each particle in the swarm"""
+        np.random.seed()
 
-		position = position.astype(int)
+        # retrieving positions for the calculation
+        position = self._particles[-2]["position"][i]
+        p_best = self._particles_best[-2]["position"][i]
+        g_best = self._global_best[-2]["position"]
 
-		if (len(np.unique(position)) != self.selection_size):
-			self._logger.warning("Particle with repeated items, re-initializing it")
-			position = self._generate_particles(0)
-		return position
+        if np.random.random() < self._w:
+            position = self._mutate(position)
+        if np.random.random() < self._c1:
+            position = self._crossover(position, p_best)
+        if np.random.random() < self._c2:
+            position = self._crossover(position, g_best)
 
-	def _mutate(self, p):
-		"""Performs a swap mutation with the remaining available itens"""
-		if len(p) > 1:
-			# get random slice
-			_slice = np.random.permutation(self.selection_size)[:2]
-			start, finish = min(_slice), max(_slice)
-			p_1 = np.append(p[0:start], p[finish:])
-			p_2 = list(set(range(self.n_candidates)) - set(p_1))
-			p[start:finish] = np.random.choice(p_2, size=len(p[start:finish]), replace=False)
-		return p
+        position = position.astype(int)
 
-	@staticmethod
-	def _crossover(p_1, p_2):
-		"""Performs the PTL Crossover between two sequences"""
-		indexes = list(range(len(p_1)))
-		if len(p_1) == len(p_2) and len(p_1) > 1:
-			# get random slice from the first array
-			_slice = np.random.permutation(indexes)[:2]
-			start, finish = min(_slice), max(_slice)
-			p_1 = p_1[start:finish]
+        if (len(np.unique(position)) != self.selection_size):
+            self._logger.warning("Particle with repeated items, re-initializing it")
+            position = self._generate_particles(0)
+        return position
 
-			# remove from the second array the values found in the slice of the first array
+    def _mutate(self, p: typing.List[int]) -> typing.List[int]:
+        """Performs a swap mutation with the remaining available itens"""
+        if len(p) > 1:
+            # get random slice
+            _slice = np.random.permutation(self.selection_size)[:2]
+            start, finish = min(_slice), max(_slice)
+            p_1 = np.append(p[0:start], p[finish:])
+            p_2 = list(set(range(self.n_candidates)) - set(p_1))
+            p[start:finish] = np.random.choice(p_2, size=len(p[start:finish]), replace=False)
+        return p
 
-			p_2 = np.array([x for x in p_2 if x in (set(p_2) - set(p_1))])
-			if len(p_2) + len(p_1) > len(indexes):
-				p_2 = p_2[:len(indexes) - len(p_1)]
+    @staticmethod
+    def _crossover(p_1: typing.List[int],
+                   p_2: typing.List[int]) -> typing.List[int]:
+        """Performs the PTL Crossover between two sequences"""
+        indexes = list(range(len(p_1)))
+        if len(p_1) == len(p_2) and len(p_1) > 1:
+            # get random slice from the first array
+            _slice = np.random.permutation(indexes)[:2]
+            start, finish = min(_slice), max(_slice)
+            p_1 = p_1[start:finish]
 
-			# create the two possible combinations
-			p_1, p_2 = np.append(p_1, p_2), np.append(p_2, p_1)
-		return [p_1, p_2][np.random.randint(0, 2)]
+            # remove from the second array the values found in the slice of the first array
+
+            p_2 = np.array([x for x in p_2 if x in (set(p_2) - set(p_1))])
+            if len(p_2) + len(p_1) > len(indexes):
+                p_2 = p_2[:len(indexes) - len(p_1)]
+
+            # create the two possible combinations
+            p_1, p_2 = np.append(p_1, p_2), np.append(p_2, p_1)
+        return [p_1, p_2][np.random.randint(0, 2)]
