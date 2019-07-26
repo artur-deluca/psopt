@@ -58,15 +58,18 @@ class Permutation(Optimizer):
 
     def _update_particles(self, **kwargs):
         self._particles[-1]["position"] = (
-            kwargs["pool"].map(
+            kwargs["pool"].starmap(
                 self._multi_position,
-                list(range(self.swarm_population))
+                zip(
+                    list(range(self.swarm_population)),
+                    kwargs["seed"]
+                )
             )
         )
 
-    def _generate_particles(self, i):
+    def _generate_particles(self, i: int, seed: int) -> typing.List[int]:
 
-        np.random.seed()
+        np.random.seed(seed)
         candidates = np.random.permutation(np.arange(self.n_candidates))
         candidates = candidates[:self.selection_size]
 
@@ -78,9 +81,9 @@ class Permutation(Optimizer):
     def _get_labels(self, position: typing.List[int]):
         return [self.labels[i] for i in position]
 
-    def _multi_position(self, i: int):
-        """Calculates the new position for each particle in the swarm"""
-        np.random.seed()
+    def _multi_position(self, i: int, seed: int):
+
+        np.random.seed(seed)
 
         # retrieving positions for the calculation
         position = self._particles[-2]["position"][i]
@@ -100,7 +103,7 @@ class Permutation(Optimizer):
             self._logger.warning(
                 "Particle with repeated items, re-initializing it"
             )
-            position = self._generate_particles(0)
+            position = self._generate_particles(0, seed)
         return position
 
     def _mutate(self, p: typing.List[int]) -> typing.List[int]:

@@ -1,3 +1,4 @@
+import itertools
 import typing
 
 import numpy as np
@@ -73,9 +74,9 @@ class Combination(Optimizer):
             / self.n_candidates
          )
 
-    def _generate_particles(self, i: int) -> typing.List[int]:
+    def _generate_particles(self, i: int, seed: int) -> typing.List[int]:
 
-        np.random.seed()
+        np.random.seed(seed)
         candidates = np.random.choice(
             [j for j in range(self.n_candidates)],
             self.selection_size,
@@ -124,9 +125,12 @@ class Combination(Optimizer):
         self._probabilities /= np.sum(self._probabilities, axis=1)[:, None]
 
         self._particles[-1]["position"] = (
-            kwargs["pool"].map(
+            kwargs["pool"].starmap(
                 self._generate_particles,
-                list(range(self.swarm_population))
+                itertools.product(
+                    list(range(self.swarm_population)),
+                    kwargs["seed"]
+                )
             )
         )
 

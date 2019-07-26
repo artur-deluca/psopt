@@ -1,23 +1,27 @@
 import functools
 import inspect
-import multiprocess
 import time
 import typing
 import warnings
 
+import multiprocess
 import numpy as np
 
 from psopt.utils import make_logger
 from psopt.utils import evaluate_constraints
 from psopt.utils import metrics
 from psopt.utils import Results
+from psopt.commons import helper
 
 Dict = typing.Dict[typing.Text, typing.Any]
 List = typing.List[Dict]
 
 
 class Optimizer:
-    """Optimizer parent class"""
+    """Optimizer parent class
+
+    Warning: This class should not be used directly.
+    Use derived classes instead"""
 
     config = {
         "w": 1,
@@ -126,22 +130,19 @@ class Optimizer:
             w [inertia]: float or sequence (float, float)
                 It controls the contribution of the previous movement.
                 If a single value is provided, w is fixed, otherwise it
-                    linearly alters from min to max within the sequence
-                    provided.
+                linearly alters from min to max within the sequence provided.
 
             c1 [self-confidence]: float
-                It controls the contribution derived by the difference between
-                    a particle's current position and it's best position found
-                    so far.
+                The contribution derived by the difference between a particle's
+                current position and it's best position found so far.
 
             c2 [swarm-confidence]: float
-                It controls the contribution derived by the difference between
-                    a particle's current position and the swarm's best position
-                    found so far.
+                The contribution derived by the difference between a particle's
+                current position and the swarm's best position found so far.
 
             population: float or int
                 Factor to cover the search space (e.g. 0.5 would generate a
-                    number of particles of half the search space).
+                number of particles of half the search space).
 
                 If `population` is greater than one, the population size will
                 have its value assigned.
@@ -151,7 +152,15 @@ class Optimizer:
 
             early_stop: int, default max_iter
                 Maximum number of consecutive iterations with no improvement
-                    that the algorithm accepts without stopping.
+                that the algorithm accepts without stopping.
+
+            seed: int, default None
+                Seed used by numpy's pseudo-random number generator.
+
+            n_jobs: int default 1
+                The number of jobs to run in parallel.
+                    If n_jobs is -1 all CPUs are used
+                    If n_jobs is -2 all but one CPU are used
 
         Returns:
             a Result object containing the solution, metadata
@@ -170,19 +179,26 @@ class Optimizer:
     def _optimize(self):
 
         start = time.time()
-        pool = multiprocess.Pool()
+        pool = multiprocess.Pool(self._n_jobs)
 
         # Initialize storage arrays
         self._init_particles()
 
         # Generate particles
         iteration = 0
-        self._particles[-1]["position"] = pool.map(
+        seeds = helper.get_seeds(self.swarm_population)
+
+        self._particles[-1]["position"] = pool.starmap(
             self._generate_particles,
-            range(self.swarm_population)
+            zip(
+                range(self.swarm_population),
+                seeds
+            )
         )
 
+
         while(iteration < self._max_iter):
+
             self._particles.append(self._template_position.copy())
             self._particles_best.append(self._template_position.copy())
             self._global_best.append(self._template_global.copy())
@@ -191,7 +207,8 @@ class Optimizer:
             self._particles[-2]["value"] = np.array(
                 pool.map(
                     self._multi_obj_func,
-                    range(self.swarm_population))
+                    range(self.swarm_population)
+                )
             )
 
             exit_flag = self._update_best()
@@ -220,7 +237,11 @@ class Optimizer:
             self._logger.info(message)
             self._logger.write_metrics(measure_results)
 
-            self._update_particles(pool=pool)
+            seeds = helper.get_seeds(self.swarm_population)
+            self._update_particles(
+                pool=pool,
+                seed=seeds
+            )
 
             # Record all the iterations for future debugging purposes
             if not self._record and iteration > 1:
@@ -248,11 +269,11 @@ class Optimizer:
 
         # Store the results
         solution = Results()
-        solution.meta = self.get_metadata()
-        solution.meta["results"] = {
-            "solution_index":
+        solution.meta = self.metadata
+        solution.results = {
+            "solution":
                 [int(x) for x in self._global_best[-2]["position"]],
-            "solution_value":
+            "value":
                 float(self._m * self._global_best[-2]["value"]),
             "elapsed_time":
                 float("{:.3f}".format(time.time() - start)),
@@ -260,29 +281,30 @@ class Optimizer:
             "iterations": iteration
         }
 
-        results = solution.meta["results"]  # For the sake of concision
         constraint_check = evaluate_constraints(
             self.constraints,
-            self._get_particle(results["solution_index"])
+            self._get_particle(solution.results["solution"])
         )
 
         if constraint_check > 0:
-            results["feasible"] = False
+            solution.results["feasible"] = False
             self._logger.warn("The algorithm was unable to find a feasible"
                               "solution with the given parameters")
         else:
-            results["feasible"] = True
+            solution.results["feasible"] = True
 
         self._logger.write_meta(solution.meta)
 
         solution.load_history(self._logger.file_path)
-        solution.solution = self._get_labels(results["solution_index"])
 
-        self._logger.info("Elapsed time {}".format(results["elapsed_time"]))
-        self._logger.info("{} iterations".format(iteration))
-        self._logger.info("Best selection: {}".format(solution.solution))
         self._logger.info(
-            "Best evaluation: {}".format(results["solution_value"])
+            "Elapsed time {}".format(solution.results["elapsed_time"]))
+        self._logger.info(
+            "{} iterations".format(iteration))
+        self._logger.info(
+            "Best selection: {}".format(solution.solution))
+        self._logger.info(
+            "Best evaluation: {}".format(solution.results["value"])
         )
 
         return solution
@@ -393,9 +415,19 @@ class Optimizer:
         except TypeError:
             self._update_w = lambda i: self._w  # noqa: E731
 
-    def get_metadata(self):
-        metadata = {
-            "initial_config": {
+        self._n_jobs = kwargs.get("n_jobs", 1)
+        if self._n_jobs == -1:
+            self._n_jobs = None
+        elif self._n_jobs == -2:
+            self._n_jobs = multiprocess.cpu_count() - 1
+
+        self._seed = kwargs.get("seed", None)
+        np.random.seed(self._seed)
+
+    @property
+    def metadata(self):
+        try:
+            metadata = {
                 "c1": self._c1,
                 "c2": self._c2,
                 "w": self._w,
@@ -403,11 +435,15 @@ class Optimizer:
                 "max iterations": self._max_iter,
                 "early_stop": self._early_stop,
                 "threshold": self._threshold,
-                "constraint_penalty": self._penalty,
+                "constraint_penalty": self._penalty
             }
-        }
 
-        return metadata
+            return metadata
+
+        except AttributeError:
+            warnings.warn("Metadata not set yet. Please run `minimize` or "
+                          "`maximize` to generate metadata", Warning)
+            return None
 
     def _exit(self, flag: int):
 
@@ -472,11 +508,14 @@ class Optimizer:
         # global_best[iteration][position or value]
         self._global_best = [self._template_global.copy()]
 
+    def _generate_particles(self, i, seed):
+        pass
+
+    def _update_particles(self, **kwargs):
+        pass
+
     def _get_particle(self, position):
         pass
 
     def _get_labels(self, position):
-        pass
-
-    def _update_particles(self, **kwargs):
         pass

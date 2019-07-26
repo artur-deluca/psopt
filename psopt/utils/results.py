@@ -36,7 +36,15 @@ class Results():
     def __init__(self, *args, **kwargs):
         self.history = self._History()
         self.meta = dict()
-        self.solution = None
+        self.results = dict()
+
+    @property
+    def solution(self):
+        return self.results["solution"]
+
+    @property
+    def value(self):
+        return self.results["value"]
 
     def load_meta(self, directory: typing.Text):
         """Loads a .json metafile and stores it in the Result.meta attribute
