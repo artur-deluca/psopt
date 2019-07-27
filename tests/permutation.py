@@ -1,23 +1,26 @@
 import functools
-from psopt.permutation import Permutation as optim
 
 
-def get_route_cost(x, initial_cost, distance_matrix):
+class TSP:
 
-    # define initial route cost
-    route_cost = initial_cost
+    def __init__(self):
+        self.candidates = list(range(len(self.distance_matrix)))
+        self.obj_func = functools.partial(
+            self.get_route_cost,
+            initial_cost=0,
+            distance_matrix=self.distance_matrix
+        )
 
-    for i in range(len(x) - 1):
-        route_cost += distance_matrix[x[i]][x[i + 1]]
+    @staticmethod
+    def get_route_cost(x, initial_cost, distance_matrix):
 
-    return route_cost
+        # define initial route cost
+        route_cost = initial_cost
 
+        for i in range(len(x) - 1):
+            route_cost += distance_matrix[x[i]][x[i + 1]]
 
-def main():
-
-    # define distances between 13 cities
-    # example taken from:
-    # [https://developers.google.com/optimization/routing/tsp]
+        return route_cost
 
     distance_matrix = [
         [0, 2451, 713, 1018, 1631, 1374,
@@ -48,26 +51,19 @@ def main():
             701, 2099, 600, 1162, 1200, 504, 0],
     ]
 
-    obj_func = functools.partial(
-        get_route_cost,
-        initial_cost=0,
-        distance_matrix=distance_matrix
-    )
-    candidates = list(range(len(distance_matrix)))
 
-    # instantiate the optimizer
-    opt = optim(obj_func, candidates)
+class coSum:
 
-    # minimize the obj function
-    solution = opt.minimize(
-        verbose=1,
-        max_iter=50,
-        population=15,
-        early_stop=25,
-        seed=0
-    )
-    print(solution.solution)
+    def __init__(self):
+        self.candidates = list(range(1, 11))
+        self.selection_size = 5
+        self.threshold = 5
+        self.constraint = {
+            "fn": sum,
+            "type": ">",
+            "value": sum(sorted(self.candidates)[:self.selection_size]) + 1
+        }
 
-
-if __name__ == "__main__":
-    main()
+    @staticmethod
+    def obj_func(x):
+        return sum([a / (i + 1) for i, a in enumerate(x)])

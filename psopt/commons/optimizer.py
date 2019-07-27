@@ -11,7 +11,7 @@ from psopt.utils import make_logger
 from psopt.utils import evaluate_constraints
 from psopt.utils import metrics
 from psopt.utils import Results
-from psopt.commons import helper
+from psopt.utils import get_seeds
 
 Dict = typing.Dict[typing.Text, typing.Any]
 List = typing.List[Dict]
@@ -186,7 +186,7 @@ class Optimizer:
 
         # Generate particles
         iteration = 0
-        seeds = helper.get_seeds(self.swarm_population)
+        seeds = get_seeds(self.swarm_population)
 
         self._particles[-1]["position"] = pool.starmap(
             self._generate_particles,
@@ -237,7 +237,7 @@ class Optimizer:
             self._logger.info(message)
             self._logger.write_metrics(measure_results)
 
-            seeds = helper.get_seeds(self.swarm_population)
+            seeds = get_seeds(self.swarm_population)
             self._update_particles(
                 pool=pool,
                 seed=seeds
@@ -293,9 +293,7 @@ class Optimizer:
         else:
             solution.results["feasible"] = True
 
-        self._logger.write_meta(solution.meta)
-
-        solution.load_history(self._logger.file_path)
+        solution.load_history(self._logger.file_path, delete=True)
 
         self._logger.info(
             "Elapsed time {}".format(solution.results["elapsed_time"]))
@@ -461,8 +459,7 @@ class Optimizer:
             3: "Particles converged to a single solution"
         }
 
-        print()
-        self._logger.info("Iteration completed\n"
+        self._logger.info("\nIteration completed\n"
                           "==========================")
 
         self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))

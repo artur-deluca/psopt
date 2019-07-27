@@ -1,5 +1,4 @@
 import csv
-import json
 import os
 import typing
 
@@ -46,18 +45,7 @@ class Results():
     def value(self):
         return self.results["value"]
 
-    def load_meta(self, directory: typing.Text):
-        """Loads a .json metafile and stores it in the Result.meta attribute
-
-        Args:
-            directory: str containing the path to file
-        """
-        filename = os.path.join(directory, "meta.json")
-        with open(filename, "r") as _file:
-            temp_dict = json.load(_file)
-            self.meta.update(temp_dict)
-
-    def load_history(self, directory: typing.Text):
+    def load_history(self, directory: typing.Text, delete: bool):
         """Loads a .csv containing the progress of an optimization process
         and stores it in the Result.history attribute
 
@@ -72,9 +60,11 @@ class Results():
             for key in header:
                 temp_dict[key] = [float(row[key]) for row in rows]
             self.history.update(temp_dict)
+        if delete:
+            os.remove(filename)
 
     @classmethod
-    def from_folder(
+    def load(
         cls: typing.Type[clsResults],
         directory: typing.Text
     ) -> clsResults:
@@ -87,7 +77,6 @@ class Results():
             a Results objects
         """
         instance = cls()
-        instance.load_meta(directory)
         instance.load_history(directory)
 
         return instance

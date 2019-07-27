@@ -1,5 +1,4 @@
 import csv
-import json
 import logging
 import os
 import typing
@@ -20,18 +19,9 @@ class CustomLogger(logging.Logger):
         os.makedirs(self.file_path, exist_ok=True)
 
         self.file_results = os.path.join(self.file_path, "results.csv")
-        self.file_meta = os.path.join(self.file_path, "meta.json")
-        self.file_position = os.path.join(self.file_path, "positions.csv")
 
     def write_metrics(self, values: dict):
         self._write_csv(self.file_results, values)
-
-    def write_positions(self, values: dict):
-        self._write_csv(self.file_position, values)
-
-    def write_meta(self, values: dict):
-        with open(self.file_meta, "a+") as json_file:
-                json.dump(values, json_file, indent=4)
 
     @staticmethod
     def _write_csv(path: typing.Text,
@@ -46,6 +36,9 @@ class CustomLogger(logging.Logger):
             if not file_exists:
                 writer.writeheader()
             writer.writerow(values)
+
+    def __getstate__(self):
+        return None  # avoid unecessary pickling issues
 
 
 def make_logger(name: typing.Text,
