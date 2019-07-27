@@ -2,8 +2,8 @@
 
 A particle swarm optimizer for combinatorial optimization
 
-# How to use
-```
+## How to use
+```python
 from psopt.permutation import Permutation
 
 # define an objective function to optimize

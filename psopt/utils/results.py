@@ -77,6 +77,6 @@ class Results():
             a Results objects
         """
         instance = cls()
-        instance.load_history(directory)
+        instance.load_history(directory, delete=False)
 
         return instance
