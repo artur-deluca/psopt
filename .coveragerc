@@ -2,6 +2,9 @@
 branch = True
 source = psopt
 
+# parallel = true
+# concurrency = multiprocessing
+
 [report]
 exclude_lines =
     if self.debug:
@@ -12,4 +15,3 @@ ignore_errors = True
 omit =
     tests/*
     /setup.py
-    examples/*
