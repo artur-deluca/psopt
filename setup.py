@@ -9,6 +9,7 @@ install_requires = [
 
 dev_requires = [
     "pytest",
+    "pytest-cov",
     "flake8"
 ]
 
