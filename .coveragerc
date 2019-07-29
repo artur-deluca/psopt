@@ -1,6 +1,5 @@
 [run]
 branch = True
-source = psopt
 
 # parallel = true
 # concurrency = multiprocessing
