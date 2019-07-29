@@ -3,7 +3,7 @@ python: 3.6
 install: 
   - pip install .
   - pip install "pytest>=3.6" pytest-cov codecov
-script: pytest --verbose --cov=./ --cov-report=xml
+script: pytest --verbose --cov=psopt
 git:
   depth: 1
 after_success:
