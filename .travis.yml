@@ -2,8 +2,7 @@ language: python
 python: 3.6
 install: 
   - pip install .
-  - pip install codecov
-  - pip install pytest>=3.6 pytest-cov
+  - pip install "pytest>=3.6" pytest-cov codecov
 script: pytest --verbose --cov=./ --cov-report=xml
 git:
   depth: 1
