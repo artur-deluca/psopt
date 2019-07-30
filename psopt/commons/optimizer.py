@@ -196,7 +196,6 @@ class Optimizer:
             )
         )
 
-
         while(iteration < self._max_iter):
 
             self._particles.append(self._template_position.copy())
@@ -212,7 +211,6 @@ class Optimizer:
             )
 
             exit_flag = self._update_best()
-            if exit_flag: break
 
             # Logging iteration
             message = "Iteration {}:\n".format(iteration)
@@ -236,6 +234,8 @@ class Optimizer:
             )
             self._logger.info(message)
             self._logger.write_metrics(measure_results)
+
+            if exit_flag: break
 
             seeds = get_seeds(self.swarm_population)
             self._update_particles(
@@ -283,8 +283,10 @@ class Optimizer:
 
         constraint_check = evaluate_constraints(
             self.constraints,
-            self._get_particle(solution.results["solution"])
+            self._get_particle(solution.solution)
         )
+
+        solution.results["solution"] = self._get_labels(solution.solution)
 
         if constraint_check > 0:
             solution.results["feasible"] = False
@@ -302,7 +304,7 @@ class Optimizer:
         self._logger.info(
             "Best selection: {}".format(solution.solution))
         self._logger.info(
-            "Best evaluation: {}".format(solution.results["value"])
+            "Best evaluation: {}".format(solution.value)
         )
 
         return solution

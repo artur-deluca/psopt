@@ -8,8 +8,8 @@ def main():
         return sum(x)
 
     # list of possible candidates
-    candidates = list(range(1, 12))
-    random.shuffle(candidates)
+    random.seed(0)
+    candidates = random.sample(list(range(1, 12)), 11)
 
     # constraint: sum of values cannot be even
     def mod(x):
@@ -24,7 +24,7 @@ def main():
     threshold = 15
 
     # minimize the obj function
-    results = opt.minimize(selection_size=5, threshold=threshold)
+    results = opt.minimize(selection_size=5, threshold=threshold, seed=0, verbose=1)
     print("Solution: ", results.solution)
 
     results.history.plot(["global_best", "iteration_best"])
