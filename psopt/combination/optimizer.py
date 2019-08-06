@@ -1,4 +1,3 @@
-import itertools
 import typing
 
 import numpy as np
@@ -127,7 +126,7 @@ class Combination(Optimizer):
         self._particles[-1]["position"] = (
             kwargs["pool"].starmap(
                 self._generate_particles,
-                itertools.product(
+                zip(
                     list(range(self.swarm_population)),
                     kwargs["seed"]
                 )
