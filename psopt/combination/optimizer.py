@@ -1,4 +1,3 @@
-import itertools
 import typing
 
 import numpy as np
@@ -54,6 +53,8 @@ class Combination(Optimizer):
         "c2": 1.4,
     }  # type typing.Dict[typing.Text, typing.Any]
 
+    # ================== Initialization methods ======================
+
     def __init__(self, obj_func, candidates, constraints=None, **kwargs):
         super().config.update(__class__.config)
         super().__init__(obj_func=obj_func,
@@ -61,9 +62,9 @@ class Combination(Optimizer):
                          constraints=constraints,
                          **kwargs)
 
-    def _init_particles(self):
+    def _init_storage_fields(self):
 
-        super()._init_particles()
+        super()._init_storage_fields()
 
         # particles's velocities
         self._velocities = np.zeros((self.swarm_population, self.n_candidates))
@@ -74,19 +75,41 @@ class Combination(Optimizer):
             / self.n_candidates
          )
 
-    def _generate_particles(self, i: int, seed: int) -> typing.List[int]:
+    def _generate_particles(self, seeds: typing.List[int], pool):
+        params = [
+            {
+                "seed": seed,
+                "n_candidates": self.n_candidates,
+                "swarm_population": self.swarm_population,
+                "selection_size": self.selection_size,
+                "probabilities": prob,
+            }
+            for seed, prob in zip(seeds, self._probabilities)
+        ]
 
-        np.random.seed(seed)
+        self._particles[-1]["position"] = pool.map(
+            self._generate_candidate,
+            params
+        )
+
+    # ====================== Update methods ==========================
+
+    @staticmethod
+    def _generate_candidate(params) -> typing.List[int]:
+        np.random.seed(params["seed"])
         candidates = np.random.choice(
-            [j for j in range(self.n_candidates)],
-            self.selection_size,
-            p=self._probabilities[i],
+            [j for j in range(params["n_candidates"])],
+            params["selection_size"],
+            p=params["probabilities"],
             replace=False
         )
 
-        return [1 if x in candidates else 0 for x in range(self.n_candidates)]
+        return [
+            1 if x in candidates else 0
+            for x in range(params["n_candidates"])
+        ]
 
-    def _update_particles(self, **kwargs):
+    def _update_components(self, pool, seeds):
 
         position = np.array(self._particles[-2]["position"])
 
@@ -124,15 +147,12 @@ class Combination(Optimizer):
 
         self._probabilities /= np.sum(self._probabilities, axis=1)[:, None]
 
-        self._particles[-1]["position"] = (
-            kwargs["pool"].starmap(
-                self._generate_particles,
-                itertools.product(
-                    list(range(self.swarm_population)),
-                    kwargs["seed"]
-                )
-            )
+        self._generate_particles(
+            seeds=seeds,
+            pool=pool
         )
+
+    # ===================== Retrival methods =========================
 
     def _get_particle(self, position):
         return [self._candidates[x]

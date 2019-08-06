@@ -49,7 +49,6 @@ class Optimizer:
         self.metrics = metrics.unpack_metrics(
             kwargs.get("metrics", None)
         )  # type: typing.Optional[typing.Dict[typing.Text, typing.Callable]]
-
         if isinstance(constraints, dict):
             self.constraints = [constraints]
         else:
@@ -165,6 +164,9 @@ class Optimizer:
         Returns:
             a Result object containing the solution, metadata
                 and stored metrics history
+
+        TODO: __str__ and __repr__
+            (ex: Optimizer(c1=x, c2=y, w=e, ..., verbose=1, n_jobs=1...))
         """
 
         self._set_params(
@@ -182,68 +184,67 @@ class Optimizer:
         pool = multiprocess.Pool(self._n_jobs)
 
         # Initialize storage arrays
-        self._init_particles()
-
+        self._init_storage_fields()
+        seeds = get_seeds(self.swarm_population)
         # Generate particles
         iteration = 0
-        seeds = get_seeds(self.swarm_population)
-
-        self._particles[-1]["position"] = pool.starmap(
-            self._generate_particles,
-            zip(
-                range(self.swarm_population),
-                seeds
-            )
+        self._generate_particles(
+            seeds,
+            pool
         )
 
         while(iteration < self._max_iter):
 
+            # Add empty placeholders for the calculation by copying templates
+            # already defined at `init_storage_fields`
             self._particles.append(self._template_position.copy())
             self._particles_best.append(self._template_position.copy())
             self._global_best.append(self._template_global.copy())
+
+            # In case of a dynamic inertia configuration, function calculates
+            # the according weight for each iteration
             self._w = self._update_w(iteration)
 
-            self._particles[-2]["value"] = np.array(
-                pool.map(
-                    self._multi_obj_func,
-                    range(self.swarm_population)
-                )
-            )
+            # Evaluate the latest generated particles
+            # according to the objective function and the compliance
+            # with existing constraints as well
+            self.evaluate_particles(pool)
 
+            # Identifies best values for the whole swarm and for each particle
             exit_flag = self._update_best()
-
+            
             # Logging iteration
             message = "Iteration {}:\n".format(iteration)
 
-            measure_results = {
+            metric_results = {
                 "global_best": self._m * self._global_best[-2]["value"],
                 "iteration_best": self._m * max(self._particles[-2]["value"])
             }
 
             # Log metric results
-            measure_results = {
-                **measure_results,
-                **self._calculate_measures(pool=pool)
+            metric_results = {
+                **metric_results,
+                **self._calculate_metrics(pool=pool)
             }
 
             message += "".join(
                 [
                     "   {}: {:.3f}".format(key.replace("_", " "), value)
-                    for key, value in measure_results.items()
+                    for key, value in metric_results.items()
                 ]
             )
             self._logger.info(message)
-            self._logger.write_metrics(measure_results)
+            self._logger.write_metrics(metric_results)
 
             if exit_flag: break
 
-            seeds = get_seeds(self.swarm_population)
-            self._update_particles(
-                pool=pool,
-                seed=seeds
+            self._update_components(
+                pool,
+                get_seeds(self.swarm_population)
             )
 
-            # Record all the iterations for future debugging purposes
+            # Remove unnecessary and used storage arrays
+            # TODO: Record all the iterations for future debugging purposes
             if not self._record and iteration > 1:
                 self._particles.pop(0)
                 self._particles_best.pop(0)
@@ -309,17 +310,42 @@ class Optimizer:
 
         return solution
 
-    def _multi_obj_func(self, i: int) -> typing.Union[float, int]:
+    def evaluate_particles(self, pool):
+        params = [
+            {
+                "particle": self._get_particle(particle),
+                "m": self._m,
+                "obj_fn": self._obj_func,
+                "constraints": self.constraints,
+                "penalty": self._penalty
+            }
 
-        # Get real values of particle
-        particle = self._get_particle(self._particles[-2]["position"][i])
+            for particle in self._particles[-2]["position"]
+        ]
+
+        self._particles[-2]["value"] = np.array(
+            pool.map(
+                self._calculate_obj_fn,
+                params
+            )
+        )
+
+    @staticmethod
+    def _calculate_obj_fn(
+        params: typing.Dict[str, typing.Any]
+    ) -> typing.Union[float, int]:
 
         # Evaluate particle on the objective function
-        evaluation = self._m * self._obj_func(particle)
+        evaluation = params["m"] * params["obj_fn"](params["particle"])
 
         # Add potential penalties caused by constraints' violations
-        constraint_factor = evaluate_constraints(self.constraints, particle)
-        evaluation += self._m * self._penalty * constraint_factor
+        constraint_factor = (
+            evaluate_constraints(
+                params["constraints"],
+                params["particle"]
+            )
+        )
+        evaluation += params["m"] * params["penalty"] * constraint_factor
 
         return evaluation
 
@@ -466,9 +492,9 @@ class Optimizer:
 
         self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
 
-    def _calculate_measures(self, pool):
+    def _calculate_metrics(self, pool):
 
-        measure_results = dict()  # set dict to store the results
+        metric_results = dict()  # set dict to store the results
         for name, func in self.metrics.items():
 
             # if the number of parameters is equal 2, partially complete it
@@ -480,17 +506,17 @@ class Optimizer:
                     self._global_best[-2]["position"]
                 )
 
-            # calculate measures
-            measure_results[name] = np.mean(
+            # calculate metrics
+            metric_results[name] = np.mean(
                 pool.map(
                     func,
                     self._particles[-2]["position"]
                 )
             )
 
-        return measure_results
+        return metric_results
 
-    def _init_particles(self):
+    def _init_storage_fields(self):
         self._template_position = {
             "position": [[] for _ in range(self.swarm_population)],
             "value": [-np.inf for _ in range(self.swarm_population)]
@@ -510,7 +536,7 @@ class Optimizer:
     def _generate_particles(self, i, seed):
         pass
 
-    def _update_particles(self, **kwargs):
+    def _update_components(self, **kwargs):
         pass
 
     def _get_particle(self, position):

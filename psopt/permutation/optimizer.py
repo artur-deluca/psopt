@@ -49,6 +49,8 @@ class Permutation(Optimizer):
         "c2": 0.8,
     }  # type typing.Dict[typing.Text, typing.Any]
 
+    # ================== Initialization methods ======================
+
     def __init__(self, obj_func, candidates, constraints=None, **kwargs):
         super().config.update(__class__.config)
         super().__init__(obj_func=obj_func,
@@ -56,64 +58,92 @@ class Permutation(Optimizer):
                          constraints=constraints,
                          **kwargs)
 
-    def _update_particles(self, **kwargs):
-        self._particles[-1]["position"] = (
-            kwargs["pool"].starmap(
-                self._multi_position,
-                zip(
-                    list(range(self.swarm_population)),
-                    kwargs["seed"]
-                )
-            )
+    def _generate_particles(self, seeds: typing.List[int], pool):
+        params = [
+            {
+                "seed": x,
+                "n_candidates": self.n_candidates,
+                "swarm_population": self.swarm_population,
+                "selection_size": self.selection_size,
+            }
+            for x in seeds
+        ]
+
+        self._particles[-1]["position"] = pool.map(
+            self._generate_candidate,
+            params
         )
 
-    def _generate_particles(self, i: int, seed: int) -> typing.List[int]:
-
-        np.random.seed(seed)
-        candidates = np.random.permutation(np.arange(self.n_candidates))
-        candidates = candidates[:self.selection_size]
+    @staticmethod
+    def _generate_candidate(params: typing.Dict[str, int]) -> typing.List[int]:
+        np.random.seed(params["seed"])
+        candidates = np.random.permutation(np.arange(params["n_candidates"]))
+        candidates = candidates[:params["selection_size"]]
 
         return candidates
 
-    def _get_particle(self, position: typing.List[int]):
-        return [self._candidates[x] for x in position]
+    # ====================== Update methods ==========================
 
-    def _get_labels(self, position: typing.List[int]):
-        return [self.labels[i] for i in position]
+    def _update_components(self, pool, seeds):
+        params = [
+            {
+                "logger": self._logger,
+                "w": self._w,
+                "c1": self._c1,
+                "c2": self._c2,
+                "seed": seed,
+                "particle": particle,
+                "pbest": pbest,
+                "gbest": self._global_best[-2]["position"],
+                "n_candidates": self.n_candidates,
+                "selection_size": self.selection_size
 
-    def _multi_position(self, i: int, seed: int):
+            } for seed, particle, pbest in zip(
+                seeds,
+                self._particles[-2]["position"],
+                self._particles_best[-2]["position"]
+            )
+        ]
 
-        np.random.seed(seed)
+        self._particles[-1]["position"] = (
+            pool.map(self._update_candidate, params)
+        )
+
+    @staticmethod
+    def _update_candidate(params: typing.Dict[str, typing.Any]):
+
+        np.random.seed(params["seed"])
 
         # retrieving positions for the calculation
-        position = self._particles[-2]["position"][i]
-        p_best = self._particles_best[-2]["position"][i]
-        g_best = self._global_best[-2]["position"]
+        particle = params["particle"]
+        pbest = params["pbest"]
+        gbest = params["gbest"]
 
-        if np.random.random() < self._w:
-            position = self._mutate(position)
-        if np.random.random() < self._c1:
-            position = self._crossover(position, p_best)
-        if np.random.random() < self._c2:
-            position = self._crossover(position, g_best)
+        if np.random.random() < params["w"]:
+            particle = Permutation._mutate(particle,
+                                           params["selection_size"],
+                                           params["n_candidates"])
 
-        position = position.astype(int)
+        if np.random.random() < params["c1"]:
+            particle = Permutation._crossover(particle, pbest)
+        if np.random.random() < params["c2"]:
+            particle = Permutation._crossover(particle, gbest)
 
-        if (len(np.unique(position)) != self.selection_size):
-            self._logger.warning(
-                "Particle with repeated items, re-initializing it"
-            )
-            position = self._generate_particles(0, seed)
-        return position
+        particle = particle.astype(int)
 
-    def _mutate(self, p: typing.List[int]) -> typing.List[int]:
+        return particle
+
+    @staticmethod
+    def _mutate(p: typing.List[int],
+                selection_size: int,
+                n_candidates: int) -> typing.List[int]:
         """Performs a swap mutation with the remaining available itens"""
         if len(p) > 1:
             # get random slice
-            _slice = np.random.permutation(self.selection_size)[:2]
+            _slice = np.random.permutation(selection_size)[:2]
             start, finish = min(_slice), max(_slice)
             p_1 = np.append(p[0:start], p[finish:])
-            p_2 = list(set(range(self.n_candidates)) - set(p_1))
+            p_2 = list(set(range(n_candidates)) - set(p_1))
             p[start:finish] = np.random.choice(
                 p_2,
                 size=len(p[start:finish]),
@@ -125,6 +155,7 @@ class Permutation(Optimizer):
     def _crossover(p_1: typing.List[int],
                    p_2: typing.List[int]) -> typing.List[int]:
         """Performs the PTL Crossover between two sequences"""
+
         indexes = list(range(len(p_1)))
         if len(p_1) == len(p_2) and len(p_1) > 1:
             # get random slice from the first array
@@ -142,3 +173,11 @@ class Permutation(Optimizer):
             # create the two possible combinations
             p_1, p_2 = np.append(p_1, p_2), np.append(p_2, p_1)
         return [p_1, p_2][np.random.randint(0, 2)]
+
+    # ===================== Retrival methods =========================
+
+    def _get_particle(self, position: typing.List[int]):
+        return [self._candidates[x] for x in position]
+
+    def _get_labels(self, position: typing.List[int]):
+        return [self.labels[i] for i in position]

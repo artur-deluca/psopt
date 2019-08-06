@@ -34,8 +34,8 @@ def main():
     optimized = RFC().fit(train_x[:, solution], train_Y)
 
     print("\nTest accuracy\n--------------------------")
-    print("All columns:", original.score(test_x, test_Y))
-    print("Solution:", optimized.score(test_x[:, solution], test_Y))
+    print("All columns: {:.3f}".format(original.score(test_x, test_Y)))
+    print("Solution:  {:.3f}".format(optimized.score(test_x[:, solution], test_Y)))
 
 
 if __name__ == "__main__":
