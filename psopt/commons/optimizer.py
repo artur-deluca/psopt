@@ -185,12 +185,12 @@ class Optimizer:
 
         # Initialize storage arrays
         self._init_storage_fields()
-        seeds = get_seeds(self.swarm_population)
+
         # Generate particles
         iteration = 0
         self._generate_particles(
-            seeds,
-            pool
+            pool,
+            get_seeds(self.swarm_population)
         )
 
         while(iteration < self._max_iter):
@@ -533,10 +533,10 @@ class Optimizer:
         # global_best[iteration][position or value]
         self._global_best = [self._template_global.copy()]
 
-    def _generate_particles(self, i, seed):
+    def _generate_particles(self, pool, seeds):
         pass
 
-    def _update_components(self, **kwargs):
+    def _update_components(self, pool, seeds):
         pass
 
     def _get_particle(self, position):

@@ -75,7 +75,7 @@ class Combination(Optimizer):
             / self.n_candidates
          )
 
-    def _generate_particles(self, seeds: typing.List[int], pool):
+    def _generate_particles(self, pool, seeds: typing.List[int]):
         params = [
             {
                 "seed": seed,
@@ -109,7 +109,7 @@ class Combination(Optimizer):
             for x in range(params["n_candidates"])
         ]
 
-    def _update_components(self, pool, seeds):
+    def _update_components(self, pool, seeds: typing.List[int]):
 
         position = np.array(self._particles[-2]["position"])
 
@@ -148,8 +148,8 @@ class Combination(Optimizer):
         self._probabilities /= np.sum(self._probabilities, axis=1)[:, None]
 
         self._generate_particles(
-            seeds=seeds,
-            pool=pool
+            pool=pool,
+            seeds=seeds
         )
 
     # ===================== Retrival methods =========================

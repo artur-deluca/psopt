@@ -5,7 +5,7 @@
 #################################################################################
 
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-PROJECT_NAME = test
+PROJECT_NAME = psopt
 PYTHON_INTERPRETER = python3
 
 ifeq (,$(shell which conda))
@@ -19,9 +19,8 @@ endif
 #################################################################################
 
 ## Install Python Dependencies
-requirements: test_environment
-	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
-	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
+install:
+	$(PYTHON_INTERPRETER) -m pip install -U -e .[all]
 
 ## Delete all logs and compiled Python files
 clean:
@@ -36,6 +35,10 @@ clean:
 unbuild:
 	rm build/ -r
 	rm dist/ -r
+
+## Run tests and coverage with pytest
+test:
+	pytest --cov=psopt --verbose
 
 ## Set up python interpreter environment
 create_environment:
@@ -55,9 +58,6 @@ else
 	@echo ">>> New virtualenv created. Activate with:\nworkon $(PROJECT_NAME)"
 endif
 
-## Test python environment is setup correctly
-test_environment:
-	$(PYTHON_INTERPRETER) test_environment.py
 
 #################################################################################
 # PROJECT RULES                                                                 #

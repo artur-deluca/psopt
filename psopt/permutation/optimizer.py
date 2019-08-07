@@ -58,7 +58,7 @@ class Permutation(Optimizer):
                          constraints=constraints,
                          **kwargs)
 
-    def _generate_particles(self, seeds: typing.List[int], pool):
+    def _generate_particles(self, pool, seeds: typing.List[int]):
         params = [
             {
                 "seed": x,
