@@ -10,7 +10,8 @@ install_requires = [
 dev_requires = [
     "pytest",
     "pytest-cov",
-    "flake8"
+    "flake8",
+    "codecov"
 ]
 
 with open("README.md", "r") as fh:
