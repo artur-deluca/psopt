@@ -212,7 +212,7 @@ class Optimizer:
 
             # Identifies best values for the whole swarm and for each particle
             exit_flag = self._update_best()
-            
+
             # Logging iteration
             message = "Iteration {}:\n".format(iteration)
 
