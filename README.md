@@ -21,7 +21,7 @@ candidates = list(range(1, 11))
 opt = Permutation(obj_func, candidates, metrics="l2")
 
 # minimize the obj function
-result = opt.minimize(selection_size=5, verbose=1, threshold=threshold, population=20)
+result = opt.minimize(selection_size=5, verbose=1, threshold=5, population=20)
 
 # visualize the progress
 result.history.plot("l2")
