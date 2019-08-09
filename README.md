@@ -1,4 +1,7 @@
-# PSOpt
+<p>
+  <img src="/docs/images/psopt.png">
+</p>
+
 [![Build Status](https://travis-ci.com/artur-deluca/psopt.svg?branch=master)](https://travis-ci.com/artur-deluca/psopt)
 [![codecov](https://codecov.io/gh/artur-deluca/psopt/branch/master/graph/badge.svg)](https://codecov.io/gh/artur-deluca/psopt)
 [![Maintainability](https://api.codeclimate.com/v1/badges/e969d457f95dca89cb31/maintainability)](https://codeclimate.com/github/artur-deluca/psopt/maintainability)
