@@ -1,5 +1,5 @@
 <p>
-  <img src="/docs/images/psopt.png">
+  <img src="/docs/images/psopt.svg">
 </p>
 
 [![Build Status](https://travis-ci.com/artur-deluca/psopt.svg?branch=master)](https://travis-ci.com/artur-deluca/psopt)
