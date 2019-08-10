@@ -12,7 +12,9 @@ def main():
     dataset = load_breast_cancer()
 
     # train-test split
-    train_x, test_x, train_Y, test_Y = train_test_split(dataset.data, dataset.target, test_size=0.2, random_state=1)
+    train_x, test_x, train_Y, test_Y = train_test_split(
+        dataset.data, dataset.target, test_size=0.2, random_state=1
+    )
 
     # create objective function
     def evaluate(solution):
@@ -26,7 +28,11 @@ def main():
     result = opt.maximize(selection_size=15, verbose=True, max_iter=20)
 
     # result.solution will have the same effect if labels are not provided to the optimizer
-    solution = [i for i in range(len(dataset.feature_names)) if dataset.feature_names[i] in result.solution]
+    solution = [
+        i
+        for i in range(len(dataset.feature_names))
+        if dataset.feature_names[i] in result.solution
+    ]
 
     # ======================== COMPARISON ========================
 

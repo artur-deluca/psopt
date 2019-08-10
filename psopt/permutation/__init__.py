@@ -1,7 +1,4 @@
 """
-Permutation module
-=====
-
-A particle swarm optimization algorithms used to find the best permutation of values
+Module dedicated to seek an optimum permutation of values according to a given objective function
 """
-from .optimizer import *
+from .optimizer import Permutation

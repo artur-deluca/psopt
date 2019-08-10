@@ -30,20 +30,17 @@ class Permutation(Optimizer):
     Example:
 
         >>> candidates = [2,4,5,6,3,1,7]
-
         >>> # e.g. obj_func([a, b, c, d, e]) ==> a + b/2 + c/3 + d/4 + e/5
         >>> def obj_func(x): return sum([a / (i+1) for i, a in enumerate(x)])
-
         >>> # constraint: sum of values cannot be greater than 16
         >>> constraint = {"fn":sum, "type":">", "value":16}
-
         >>> # minimize the obj function
         >>> opt = Permutation(obj_func, candidates, constraints=constraint)
         >>> sol = opt.minimize(selection_size=5)
 
     """
 
-    config = {
+    _config = {
         "w": 0.2,
         "c1": 0.8,
         "c2": 0.8,
@@ -52,11 +49,10 @@ class Permutation(Optimizer):
     # ================== Initialization methods ======================
 
     def __init__(self, obj_func, candidates, constraints=None, **kwargs):
-        super().config.update(__class__.config)
-        super().__init__(obj_func=obj_func,
-                         candidates=candidates,
-                         constraints=constraints,
-                         **kwargs)
+        super()._config.update(__class__._config)
+        super().__init__(
+            obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs
+        )
 
     def _generate_particles(self, pool, seeds: typing.List[int]):
         params = [
@@ -69,16 +65,13 @@ class Permutation(Optimizer):
             for x in seeds
         ]
 
-        self._particles[-1]["position"] = pool.map(
-            self._generate_candidate,
-            params
-        )
+        self._particles[-1]["position"] = pool.map(self._generate_candidate, params)
 
     @staticmethod
     def _generate_candidate(params: typing.Dict[str, int]) -> typing.List[int]:
         np.random.seed(params["seed"])
         candidates = np.random.permutation(np.arange(params["n_candidates"]))
-        candidates = candidates[:params["selection_size"]]
+        candidates = candidates[: params["selection_size"]]
 
         return candidates
 
@@ -96,18 +89,16 @@ class Permutation(Optimizer):
                 "pbest": pbest,
                 "gbest": self._global_best[-2]["position"],
                 "n_candidates": self.n_candidates,
-                "selection_size": self.selection_size
-
-            } for seed, particle, pbest in zip(
+                "selection_size": self.selection_size,
+            }
+            for seed, particle, pbest in zip(
                 seeds,
                 self._particles[-2]["position"],
-                self._particles_best[-2]["position"]
+                self._particles_best[-2]["position"],
             )
         ]
 
-        self._particles[-1]["position"] = (
-            pool.map(self._update_candidate, params)
-        )
+        self._particles[-1]["position"] = pool.map(self._update_candidate, params)
 
     @staticmethod
     def _update_candidate(params: typing.Dict[str, typing.Any]):
@@ -120,9 +111,9 @@ class Permutation(Optimizer):
         gbest = params["gbest"]
 
         if np.random.random() < params["w"]:
-            particle = Permutation._mutate(particle,
-                                           params["selection_size"],
-                                           params["n_candidates"])
+            particle = Permutation._mutate(
+                particle, params["selection_size"], params["n_candidates"]
+            )
 
         if np.random.random() < params["c1"]:
             particle = Permutation._crossover(particle, pbest)
@@ -134,9 +125,9 @@ class Permutation(Optimizer):
         return particle
 
     @staticmethod
-    def _mutate(p: typing.List[int],
-                selection_size: int,
-                n_candidates: int) -> typing.List[int]:
+    def _mutate(
+        p: typing.List[int], selection_size: int, n_candidates: int
+    ) -> typing.List[int]:
         """Performs a swap mutation with the remaining available itens"""
         if len(p) > 1:
             # get random slice
@@ -145,15 +136,12 @@ class Permutation(Optimizer):
             p_1 = np.append(p[0:start], p[finish:])
             p_2 = list(set(range(n_candidates)) - set(p_1))
             p[start:finish] = np.random.choice(
-                p_2,
-                size=len(p[start:finish]),
-                replace=False
+                p_2, size=len(p[start:finish]), replace=False
             )
         return p
 
     @staticmethod
-    def _crossover(p_1: typing.List[int],
-                   p_2: typing.List[int]) -> typing.List[int]:
+    def _crossover(p_1: typing.List[int], p_2: typing.List[int]) -> typing.List[int]:
         """Performs the PTL Crossover between two sequences"""
 
         indexes = list(range(len(p_1)))
@@ -168,7 +156,7 @@ class Permutation(Optimizer):
 
             p_2 = np.array([x for x in p_2 if x in (set(p_2) - set(p_1))])
             if len(p_2) + len(p_1) > len(indexes):
-                p_2 = p_2[:len(indexes) - len(p_1)]
+                p_2 = p_2[: len(indexes) - len(p_1)]
 
             # create the two possible combinations
             p_1, p_2 = np.append(p_1, p_2), np.append(p_2, p_1)
@@ -181,3 +169,83 @@ class Permutation(Optimizer):
 
     def _get_labels(self, position: typing.List[int]):
         return [self.labels[i] for i in position]
+
+        # ===================== Optimization methods =========================
+
+    def maximize(self, selection_size=None, verbose=0, **kwargs):
+        """Seeks the solution that yields the maximum objective function value
+
+        Args:
+            selection_size (int): number of candidates that compose a solution.
+
+            verbose (int): controls the verbosity while optimizing
+
+                0. Display nothing (default);
+                1. Display statuses on console;
+                2. Display statuses on console and store them in ``.logs``.
+
+            w (float or sequence): The *inertia factor* controls the contribution of the previous movement.
+                If a single value is provided, w is fixed, otherwise it
+                linearly alters from min to max within the sequence provided.
+
+            c1 (float): The *self-confidence factor* controls the contribution derived by the difference between
+                a particle's current position and it's best position found so far.
+
+            c2 (float): The *swarm-confidence factor* controls the contribution derived by the difference between
+                a particle's current position and the swarm's best position found so far.
+
+            population (float or int): Factor to cover the search space
+                (e.g. 0.5 would generate a number of particles of half the search space).
+                If `population` is greater than one, the population size will have its value assigned.
+
+            max_iter (int): Maximum possible number of iterations (default 300).
+
+            early_stop (int): Maximum number of consecutive iterations with no improvement 
+                that the algorithm accepts without stopping (default ``max_iter``).
+
+        Returns:
+            a Result object containing the solution, metadata
+                and stored metrics history
+        """
+        return super().maximize(
+            selection_size=selection_size, verbose=verbose, **kwargs
+        )
+
+    def minimize(self, selection_size=None, verbose=0, **kwargs):
+        """Seeks the solution that yields the minimum objective function value
+
+        Args:
+            selection_size (int): number of candidates that compose a solution.
+
+            verbose (int): controls the verbosity while optimizing
+
+                0. Display nothing (default);
+                1. Display statuses on console;
+                2. Display statuses on console and store them in ``.logs``.
+
+            w (float or sequence): The *inertia factor* controls the contribution of the previous movement.
+                If a single value is provided, w is fixed, otherwise it
+                linearly alters from min to max within the sequence provided.
+
+            c1 (float): The *self-confidence factor* controls the contribution derived by the difference between
+                a particle's current position and it's best position found so far.
+
+            c2 (float): The *swarm-confidence factor* controls the contribution derived by the difference between
+                a particle's current position and the swarm's best position found so far.
+
+            population (float or int): Factor to cover the search space
+                (e.g. 0.5 would generate a number of particles of half the search space).
+                If `population` is greater than one, the population size will have its value assigned.
+
+            max_iter (int): Maximum possible number of iterations (default 300).
+
+            early_stop (int): Maximum number of consecutive iterations with no improvement 
+                that the algorithm accepts without stopping (default ``max_iter``).
+
+        Returns:
+            a Result object containing the solution, metadata
+                and stored metrics history
+        """
+        return super().minimize(
+            selection_size=selection_size, verbose=verbose, **kwargs
+        )

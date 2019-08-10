@@ -2,7 +2,6 @@ import random
 
 
 class HSAT:
-
     def __init__(self, seed):
         self.candidates = list(range(20))
         self.clauses = 50
@@ -24,8 +23,7 @@ class HSAT:
             clause += random.choice(["", "not "]) + "x[{}]".format(variables.pop(0))
             while len(variables) > 0:
                 clause += " or {}x[{}]".format(
-                    random.choice(["", "not "]),
-                    variables.pop(0)
+                    random.choice(["", "not "]), variables.pop(0)
                 )
             cnf += "({}) and ".format(clause)
         # quick-fix for pattern that does not affect the result
@@ -34,13 +32,12 @@ class HSAT:
 
 
 class coSum:
-
     def __init__(self, seed):
         size = 20
         random.seed(seed)
         self.candidates = random.sample(list(range(1, size)), size - 1)
         self.selection_size = 5
-        self.threshold = sum(sorted(self.candidates)[:self.selection_size])
+        self.threshold = sum(sorted(self.candidates)[: self.selection_size])
         self.constraint = {"fn": self.mod, "type": "==", "value": 1}
 
     @staticmethod

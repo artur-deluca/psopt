@@ -5,8 +5,9 @@ List = typing.List[Dict]
 Candidate = typing.List[int]
 
 
-def evaluate_constraints(constraints: typing.Union[Dict, List],
-                         candidate: Candidate) -> float:
+def evaluate_constraints(
+    constraints: typing.Union[Dict, List], candidate: Candidate
+) -> float:
     """Calculates potential penalties associated with the given candidate
 
     The optimization problem may be subjected to constraints.
@@ -27,13 +28,12 @@ def evaluate_constraints(constraints: typing.Union[Dict, List],
     phi = 0
 
     operators = {
-
-        "==": lambda x, y: (x - y)**2,
-        "!=": lambda x, y: max(0, x - y)**2 + max(0, -x + y)**2,
-        ">": lambda x, y: max(0, x - y)**2,
-        ">=": lambda x, y: max(0, x - y)**2,
-        "<": lambda x, y: max(0, -x + y)**2,
-        "<=": lambda x, y: max(0, -x + y)**2,
+        "==": lambda x, y: (x - y) ** 2,
+        "!=": lambda x, y: max(0, x - y) ** 2 + max(0, -x + y) ** 2,
+        ">": lambda x, y: max(0, x - y) ** 2,
+        ">=": lambda x, y: max(0, x - y) ** 2,
+        "<": lambda x, y: max(0, -x + y) ** 2,
+        "<=": lambda x, y: max(0, -x + y) ** 2,
     }
 
     for var in constraints:

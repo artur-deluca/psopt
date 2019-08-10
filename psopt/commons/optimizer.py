@@ -23,7 +23,7 @@ class Optimizer:
     Warning: This class should not be used directly.
     Use derived classes instead"""
 
-    config = {
+    _config = {
         "w": 1,
         "c1": 1,
         "c2": 1,
@@ -34,11 +34,13 @@ class Optimizer:
         "penalty": 100,
     }  # type: Dict
 
-    def __init__(self,
-                 obj_func: typing.Callable,
-                 candidates: list,
-                 constraints: typing.Optional[typing.Union[Dict, List]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        obj_func: typing.Callable,
+        candidates: list,
+        constraints: typing.Optional[typing.Union[Dict, List]] = None,
+        **kwargs
+    ):
 
         warnings.filterwarnings("ignore")
 
@@ -54,126 +56,28 @@ class Optimizer:
         else:
             self.constraints = constraints or []
 
-    def maximize(self,
-                 selection_size: typing.Optional[int] = None,
-                 verbose: typing.Optional[int] = 0,
-                 **kwargs) -> Results:
-        """Seeks the solution that yields the maximum objective function value
-
-        Args:
-            selection_size: int, number of candidates to compose a solution.
-
-            verbose: int, controls the verbosity while optimizing
-                0: Display nothing (default);
-                1: Display statuses on console;
-                2: Display statuses on console and store them in .logs.
-
-            w [inertia]: float or sequence (float, float)
-                It controls the contribution of the previous movement.
-                If a single value is provided, w is fixed, otherwise it
-                    linearly alters from min to max within the sequence
-                    provided.
-
-            c1 [self-confidence]: float
-                It controls the contribution derived by the difference between
-                    a particle's current position and it's best position found
-                    so far.
-
-            c2 [swarm-confidence]: float
-                It controls the contribution derived by the difference between
-                    a particle's current position and the swarm's best position
-                    found so far.
-
-            population: float or int
-                Factor to cover the search space (e.g. 0.5 would generate a
-                    number of particles of half the search space).
-
-                If `population` is greater than one, the population size will
-                have its value assigned.
-
-            max_iter: int, default 300
-                Maximum possible number of iterations.
-
-            early_stop: int, default max_iter
-                Maximum number of consecutive iterations with no improvement
-                    that the algorithm accepts without stopping.
-
-        Returns:
-            a Result object containing the solution, metadata
-                and stored metrics history
-        """
+    def maximize(
+        self,
+        selection_size: typing.Optional[int] = None,
+        verbose: typing.Optional[int] = 0,
+        **kwargs
+    ) -> Results:
 
         self._set_params(
-            selection_size=selection_size,
-            f_min=False,
-            verbose=verbose,
-            **kwargs
+            selection_size=selection_size, f_min=False, verbose=verbose, **kwargs
         )
 
         return self._optimize()
 
-    def minimize(self,
-                 selection_size: typing.Optional[int] = None,
-                 verbose: typing.Optional[int] = 0,
-                 **kwargs) -> Results:
-        """Seeks the solution that yields the minimum objective function value
-
-        Args:
-            selection_size: int, number of candidates to compose a solution.
-
-            verbose: int, controls the verbosity while optimizing
-                0: Display nothing (default);
-                1: Display statuses on console;
-                2: Display statuses on console and store them in .logs.
-
-            w [inertia]: float or sequence (float, float)
-                It controls the contribution of the previous movement.
-                If a single value is provided, w is fixed, otherwise it
-                linearly alters from min to max within the sequence provided.
-
-            c1 [self-confidence]: float
-                The contribution derived by the difference between a particle's
-                current position and it's best position found so far.
-
-            c2 [swarm-confidence]: float
-                The contribution derived by the difference between a particle's
-                current position and the swarm's best position found so far.
-
-            population: float or int
-                Factor to cover the search space (e.g. 0.5 would generate a
-                number of particles of half the search space).
-
-                If `population` is greater than one, the population size will
-                have its value assigned.
-
-            max_iter: int, default 300
-                Maximum possible number of iterations.
-
-            early_stop: int, default max_iter
-                Maximum number of consecutive iterations with no improvement
-                that the algorithm accepts without stopping.
-
-            seed: int, default None
-                Seed used by numpy's pseudo-random number generator.
-
-            n_jobs: int default 1
-                The number of jobs to run in parallel.
-                    If n_jobs is -1 all CPUs are used
-                    If n_jobs is -2 all but one CPU are used
-
-        Returns:
-            a Result object containing the solution, metadata
-                and stored metrics history
-
-        TODO: __str__ and __repr__
-            (ex: Optimizer(c1=x, c2=y, w=e, ..., verbose=1, n_jobs=1...))
-        """
+    def minimize(
+        self,
+        selection_size: typing.Optional[int] = None,
+        verbose: typing.Optional[int] = 0,
+        **kwargs
+    ) -> Results:
 
         self._set_params(
-            selection_size=selection_size,
-            f_min=True,
-            verbose=verbose,
-            **kwargs
+            selection_size=selection_size, f_min=True, verbose=verbose, **kwargs
         )
 
         return self._optimize()
@@ -188,12 +92,9 @@ class Optimizer:
 
         # Generate particles
         iteration = 0
-        self._generate_particles(
-            pool,
-            get_seeds(self.swarm_population)
-        )
+        self._generate_particles(pool, get_seeds(self.swarm_population))
 
-        while(iteration < self._max_iter):
+        while iteration < self._max_iter:
 
             # Add empty placeholders for the calculation by copying templates
             # already defined at `init_storage_fields`
@@ -208,7 +109,7 @@ class Optimizer:
             # Evaluate the latest generated particles
             # according to the objective function and the compliance
             # with existing constraints as well
-            self.evaluate_particles(pool)
+            self._evaluate_particles(pool)
 
             # Identifies best values for the whole swarm and for each particle
             exit_flag = self._update_best()
@@ -218,14 +119,11 @@ class Optimizer:
 
             metric_results = {
                 "global_best": self._m * self._global_best[-2]["value"],
-                "iteration_best": self._m * max(self._particles[-2]["value"])
+                "iteration_best": self._m * max(self._particles[-2]["value"]),
             }
 
             # Log metric results
-            metric_results = {
-                **metric_results,
-                **self._calculate_metrics(pool=pool)
-            }
+            metric_results = {**metric_results, **self._calculate_metrics(pool=pool)}
 
             message += "".join(
                 [
@@ -236,12 +134,10 @@ class Optimizer:
             self._logger.info(message)
             self._logger.write_metrics(metric_results)
 
-            if exit_flag: break
+            if exit_flag:
+                break
 
-            self._update_components(
-                pool,
-                get_seeds(self.swarm_population)
-            )
+            self._update_components(pool, get_seeds(self.swarm_population))
 
             # Remove unnecessary and used storage arrays
             # TODO: Record all the iterations for future debugging purposes
@@ -272,62 +168,51 @@ class Optimizer:
         solution = Results()
         solution.meta = self.metadata
         solution.results = {
-            "solution":
-                [int(x) for x in self._global_best[-2]["position"]],
-            "value":
-                float(self._m * self._global_best[-2]["value"]),
-            "elapsed_time":
-                float("{:.3f}".format(time.time() - start)),
+            "solution": [int(x) for x in self._global_best[-2]["position"]],
+            "value": float(self._m * self._global_best[-2]["value"]),
+            "elapsed_time": float("{:.3f}".format(time.time() - start)),
             "exit_status": exit_flag,
-            "iterations": iteration
+            "iterations": iteration,
         }
 
         constraint_check = evaluate_constraints(
-            self.constraints,
-            self._get_particle(solution.solution)
+            self.constraints, self._get_particle(solution.solution)
         )
 
         solution.results["solution"] = self._get_labels(solution.solution)
 
         if constraint_check > 0:
             solution.results["feasible"] = False
-            self._logger.warn("The algorithm was unable to find a feasible"
-                              "solution with the given parameters")
+            self._logger.warn(
+                "The algorithm was unable to find a feasible"
+                "solution with the given parameters"
+            )
         else:
             solution.results["feasible"] = True
 
         solution.load_history(self._logger.file_path, delete=True)
 
-        self._logger.info(
-            "Elapsed time {}".format(solution.results["elapsed_time"]))
-        self._logger.info(
-            "{} iterations".format(iteration))
-        self._logger.info(
-            "Best selection: {}".format(solution.solution))
-        self._logger.info(
-            "Best evaluation: {}".format(solution.value)
-        )
+        self._logger.info("Elapsed time {}".format(solution.results["elapsed_time"]))
+        self._logger.info("{} iterations".format(iteration))
+        self._logger.info("Best selection: {}".format(solution.solution))
+        self._logger.info("Best evaluation: {}".format(solution.value))
 
         return solution
 
-    def evaluate_particles(self, pool):
+    def _evaluate_particles(self, pool):
         params = [
             {
                 "particle": self._get_particle(particle),
                 "m": self._m,
                 "obj_fn": self._obj_func,
                 "constraints": self.constraints,
-                "penalty": self._penalty
+                "penalty": self._penalty,
             }
-
             for particle in self._particles[-2]["position"]
         ]
 
         self._particles[-2]["value"] = np.array(
-            pool.map(
-                self._calculate_obj_fn,
-                params
-            )
+            pool.map(self._calculate_obj_fn, params)
         )
 
     @staticmethod
@@ -339,11 +224,8 @@ class Optimizer:
         evaluation = params["m"] * params["obj_fn"](params["particle"])
 
         # Add potential penalties caused by constraints' violations
-        constraint_factor = (
-            evaluate_constraints(
-                params["constraints"],
-                params["particle"]
-            )
+        constraint_factor = evaluate_constraints(
+            params["constraints"], params["particle"]
         )
         evaluation += params["m"] * params["penalty"] * constraint_factor
 
@@ -359,9 +241,7 @@ class Optimizer:
         self._particles_best[-2] = self._particles[-2]
 
         # Get the last 3 particle best values for each particle
-        all_values = np.array(
-            [i["value"] for i in self._particles_best[-4:-1]]
-        )
+        all_values = np.array([i["value"] for i in self._particles_best[-4:-1]])
 
         # Assign the current particle best value as the
         # maximum of the previous selection
@@ -384,7 +264,7 @@ class Optimizer:
         self._global_best[-2]["position"] = gbest_position
 
         # If the best position has been changed
-        if (last_best_position != list(gbest_position)):
+        if last_best_position != list(gbest_position):
             # Clear counter since new global best was found
             self._early_stop_counter = 0
             if self._global_best[-2]["value"] >= self._threshold:
@@ -411,11 +291,11 @@ class Optimizer:
         self.selection_size = selection_size or self.n_candidates
 
         # Set the swarm and optimization parameters
-        for field in __class__.config:
+        for field in __class__._config:
             if field in kwargs.keys():
                 setattr(self, "_{}".format(field), kwargs[field])
             else:
-                setattr(self, "_{}".format(field), __class__.config[field])
+                setattr(self, "_{}".format(field), __class__._config[field])
 
         # Configure acceptable threshold
         if self._threshold != np.inf:
@@ -434,8 +314,8 @@ class Optimizer:
         try:
             w_sta, w_fin = tuple(self._w)
 
-            self._update_w = (
-                lambda i: (w_fin - (w_fin - w_sta)) * (i / self._max_iter)
+            self._update_w = lambda i: (w_fin - (w_fin - w_sta)) * (
+                i / self._max_iter
             )  # noqa: E731
 
         except TypeError:
@@ -461,14 +341,17 @@ class Optimizer:
                 "max iterations": self._max_iter,
                 "early_stop": self._early_stop,
                 "threshold": self._threshold,
-                "constraint_penalty": self._penalty
+                "constraint_penalty": self._penalty,
             }
 
             return metadata
 
         except AttributeError:
-            warnings.warn("Metadata not set yet. Please run `minimize` or "
-                          "`maximize` to generate metadata", Warning)
+            warnings.warn(
+                "Metadata not set yet. Please run `minimize` or "
+                "`maximize` to generate metadata",
+                Warning,
+            )
             return None
 
     def _exit(self, flag: int):
@@ -476,19 +359,16 @@ class Optimizer:
         flag = flag or 0
 
         exit_flag = {
-            0:
-                "Algortihm reached the maximum limit"
-                " of {} iterations".format(self._max_iter),
-            1:
-                "Algorithm has not improved for"
-                " {} consecutive iterations".format(self._early_stop),
+            0: "Algortihm reached the maximum limit"
+            " of {} iterations".format(self._max_iter),
+            1: "Algorithm has not improved for"
+            " {} consecutive iterations".format(self._early_stop),
             2: "Algorithm has reached the value "
-               "threshold of {}".format(self._m * self._threshold),
-            3: "Particles converged to a single solution"
+            "threshold of {}".format(self._m * self._threshold),
+            3: "Particles converged to a single solution",
         }
 
-        self._logger.info("\nIteration completed\n"
-                          "==========================")
+        self._logger.info("\nIteration completed\n" "==========================")
 
         self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
 
@@ -501,17 +381,11 @@ class Optimizer:
             # with the global best at current iteration
             number_of_param = len(inspect.signature(func).parameters)
             if number_of_param == 2:
-                func = functools.partial(
-                    func,
-                    self._global_best[-2]["position"]
-                )
+                func = functools.partial(func, self._global_best[-2]["position"])
 
             # calculate metrics
             metric_results[name] = np.mean(
-                pool.map(
-                    func,
-                    self._particles[-2]["position"]
-                )
+                pool.map(func, self._particles[-2]["position"])
             )
 
         return metric_results
@@ -519,7 +393,7 @@ class Optimizer:
     def _init_storage_fields(self):
         self._template_position = {
             "position": [[] for _ in range(self.swarm_population)],
-            "value": [-np.inf for _ in range(self.swarm_population)]
+            "value": [-np.inf for _ in range(self.swarm_population)],
         }
 
         self._template_global = {"position": [], "value": -np.inf}

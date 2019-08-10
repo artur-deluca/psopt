@@ -16,8 +16,7 @@ def generate_cnf(n_vars, clauses, k=3, seed=None):
         clause += random.choice(["", "not "]) + "x[{}]".format(variables.pop(0))
         while len(variables) > 0:
             clause += " or {}x[{}]".format(
-                random.choice(["", "not "]),
-                variables.pop(0)
+                random.choice(["", "not "]), variables.pop(0)
             )
         cnf += "({}) and ".format(clause)
     # quick-fix for pattern that does not affect the result
@@ -44,7 +43,7 @@ def main():
 
     # maximize HALF-SAT
     # (half of the number of variables are one and the rest is zero)
-    opt.maximize(selection_size=n_var//2, verbose=1, threshold=threshold)
+    opt.maximize(selection_size=n_var // 2, verbose=1, threshold=threshold)
 
 
 if __name__ == "__main__":

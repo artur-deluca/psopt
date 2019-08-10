@@ -24,8 +24,7 @@ class CustomLogger(logging.Logger):
         self._write_csv(self.file_results, values)
 
     @staticmethod
-    def _write_csv(path: typing.Text,
-                   values: dict):
+    def _write_csv(path: typing.Text, values: dict):
 
         file_exists = os.path.isfile(path)
 
@@ -41,8 +40,7 @@ class CustomLogger(logging.Logger):
         return None  # avoid unecessary pickling issues
 
 
-def make_logger(name: typing.Text,
-                verbose: typing.Union[int, bool]) -> CustomLogger:
+def make_logger(name: typing.Text, verbose: typing.Union[int, bool]) -> CustomLogger:
 
     logger = CustomLogger(name)
     logger.setLevel(logging.DEBUG)
@@ -65,9 +63,7 @@ def make_logger(name: typing.Text,
         fileHandler = logging.FileHandler(".logs/logging.log")
         fileHandler.setLevel(logging.DEBUG)
         fileHandler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
         logger.addHandler(fileHandler)
 

@@ -1,7 +1,4 @@
 """
-Combination sub-module
-=====
-
-A particle swarm optimization algorithms used to find the best combination of values
+Module dedicated to seek an optimum combination of values according to a given objective function
 """
-from .optimizer import *
+from .optimizer import Combination

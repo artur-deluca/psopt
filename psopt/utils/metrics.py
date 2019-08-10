@@ -25,9 +25,7 @@ reference = dict(inspect.getmembers(sys.modules[__name__], inspect.isfunction))
 M = typing.Union[typing.Text, typing.Callable, typing.List]
 
 
-def unpack_metrics(
-    selected_metrics: M
-) -> typing.Dict[typing.Text, typing.Callable]:
+def unpack_metrics(selected_metrics: M) -> typing.Dict[typing.Text, typing.Callable]:
 
     metrics_dict = dict()
 

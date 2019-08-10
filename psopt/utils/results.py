@@ -7,13 +7,15 @@ import matplotlib.pyplot as plt
 clsResults = typing.TypeVar("clsResults", bound="Results")
 
 
-class Results():
+class Results:
     """Class to store the optimization results"""
 
     class _History(dict):
-        def plot(self,
-                 y: typing.Union[typing.Text, typing.List[typing.Text]],
-                 x: typing.Optional[typing.Text] = None):
+        def plot(
+            self,
+            y: typing.Union[typing.Text, typing.List[typing.Text]],
+            x: typing.Optional[typing.Text] = None,
+        ):
 
             if isinstance(y, str):
                 y = [y]
@@ -64,10 +66,7 @@ class Results():
             os.remove(filename)
 
     @classmethod
-    def load(
-        cls: typing.Type[clsResults],
-        directory: typing.Text
-    ) -> clsResults:
+    def load(cls: typing.Type[clsResults], directory: typing.Text) -> clsResults:
         """Instantiates Result object from files within the directory
 
         Args:
