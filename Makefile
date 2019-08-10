@@ -40,6 +40,13 @@ unbuild:
 test:
 	pytest --cov=psopt --verbose
 
+# build documentation
+docs_:
+	rm -rf docs/source/*
+	sphinx-apidoc -f -o docs/source psopt psopt/commons psopt/utils psopt/continuous
+	cd docs/ && $(MAKE) html
+	brave-browser docs/_build/html/index.html 
+
 ## Set up python interpreter environment
 create_environment:
 ifeq (True,$(HAS_CONDA))
