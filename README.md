@@ -9,6 +9,14 @@
 
 A particle swarm optimizer for combinatorial optimization
 
+## Project Information
+
+`psopt` is released under the [MIT](https://choosealicense.com/licenses/mit/),
+its documentation lives at [Read the Docs](https://psopt.readthedocs.io/en/latest/),
+the code on [GitHub](https://github.com/artur-deluca/psopt),
+and the latest release on [PyPI](https://pypi.org/project/psopt/).
+
+
 ## How to use
 ```python
 from psopt.permutation import Permutation
