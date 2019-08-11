@@ -1,6 +1,4 @@
-<p>
-  <img width=400 src="/docs/images/psopt.svg">
-</p>
+<p><img width=400 src="/docs/images/psopt.svg"></p>
 
 [![Build Status](https://travis-ci.com/artur-deluca/psopt.svg?branch=master)](https://travis-ci.com/artur-deluca/psopt)
 [![codecov](https://codecov.io/gh/artur-deluca/psopt/branch/master/graph/badge.svg)](https://codecov.io/gh/artur-deluca/psopt)
@@ -16,10 +14,9 @@ its documentation lives at [Read the Docs](https://psopt.readthedocs.io/en/lates
 the code on [GitHub](https://github.com/artur-deluca/psopt),
 and the latest release on [PyPI](https://pypi.org/project/psopt/).
 
-
 ## How to use
 ```python
-from psopt.permutation import Permutation
+from psopt import Permutation
 
 # define an objective function to optimize
 def obj_func(x):
