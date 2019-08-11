@@ -1,5 +1,5 @@
 import random
-from psopt.combination import Combination as optim
+from psopt import Combination
 
 
 def generate_cnf(n_vars, clauses, k=3, seed=None):
@@ -33,7 +33,7 @@ def main():
         return fn([1 if i in x else 0 for i in range(n_var)])
 
     # instantiate the optimizer
-    opt = optim(obj_func, list(range(n_var)))
+    opt = Combination(obj_func, list(range(n_var)))
 
     # define a threshold of acceptance
     threshold = 1

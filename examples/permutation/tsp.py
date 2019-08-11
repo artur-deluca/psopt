@@ -1,5 +1,5 @@
 import functools
-from psopt.permutation import Permutation as optim
+from psopt import Permutation
 
 
 def get_route_cost(x, initial_cost, distance_matrix):
@@ -41,7 +41,7 @@ def main():
     candidates = list(range(len(distance_matrix)))
 
     # instantiate the optimizer
-    opt = optim(obj_func, candidates)
+    opt = Permutation(obj_func, candidates)
 
     # minimize the obj function
     solution = opt.minimize(

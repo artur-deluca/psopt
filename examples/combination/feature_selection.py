@@ -1,4 +1,4 @@
-from psopt.combination import Combination as optim
+from psopt import Combination
 
 # to run this, make sure to have scikit-learn installed
 from sklearn.ensemble import RandomForestClassifier as RFC
@@ -22,7 +22,7 @@ def main():
         return results["test_score"].mean()
 
     # instantiate optimizer
-    opt = optim(evaluate, list(range(train_x.shape[1])), labels=dataset.feature_names)
+    opt = Combination(evaluate, list(range(train_x.shape[1])), labels=dataset.feature_names)
 
     # maximize obj function
     result = opt.maximize(selection_size=15, verbose=True, max_iter=20)

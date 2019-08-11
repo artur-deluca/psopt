@@ -1,5 +1,5 @@
 import random
-from psopt.combination import Combination as optim
+from psopt import Combination
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     constraint = {"fn": mod, "type": "==", "value": 1}
 
     # instantiate the optimizer
-    opt = optim(obj_func, candidates, constraints=constraint)
+    opt = Combination(obj_func, candidates, constraints=constraint)
 
     # define a threshold of acceptance for early convergence
     threshold = 15

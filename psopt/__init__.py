@@ -10,13 +10,13 @@ Documentation is available in docstrings provided with the code.
 
 Available
 ---------------------
-permutation
-    sub-module dedicated to find the best permutation of possibilities
+Permutation
+    Optimizer to find the best permutation of possibilities
 
-combination
-    sub-module dedicated to find the best combination of possibilities
+Combination
+    Optimizer to find the best combination of possibilities
 
 """
 
-import psopt.permutation
-import psopt.combination
+from psopt.permutation import Permutation
+from psopt.combination import Combination
