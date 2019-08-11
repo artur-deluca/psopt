@@ -38,15 +38,15 @@ class Results:
             plt.show()
 
     def __init__(self, *args, **kwargs):
-        self.history = self.History()
+        self._history = self.History()
         self.meta = dict()
         self.results = dict()
-
+    
     @property
     def history(self):
         """A History object containing the recorded values of the global-best,
             iteration best and any other metric specified"""
-        return self.history
+        return self._history
 
     @property
     def solution(self):

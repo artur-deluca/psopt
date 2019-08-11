@@ -36,7 +36,7 @@ result = opt.minimize(selection_size=5, verbose=1, threshold=5, population=20)
 result.history.plot("global_best")
 ```
 
-<p align="center">
+<p>
   <img width="400" height="300" src="/docs/images/global_best.svg">
 </p>
 

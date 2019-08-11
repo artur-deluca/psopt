@@ -1,5 +1,5 @@
 import pytest
-from psopt.combination import Combination
+from psopt import Combination
 from combination import coSum, HSAT
 
 

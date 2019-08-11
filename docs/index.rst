@@ -15,7 +15,7 @@ and the latest release on `PyPI <https://pypi.org/project/psopt/>`_.
 Overview
 ===============
 
-:doc:`source/overview/install`
+ - :doc:`source/overview/install`
 
 API Reference
 -------------
