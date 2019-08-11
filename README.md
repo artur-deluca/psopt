@@ -32,6 +32,63 @@ opt = Permutation(obj_func, candidates, metrics="l2")
 result = opt.minimize(selection_size=5, verbose=1, threshold=5, population=20)
 
 # visualize the progress
-result.history.plot("l2")
+#result.history.plot("l2")
 result.history.plot("global_best")
 ```
+
+<p align="center">
+  <img width="400" height="300" src="/docs/images/global_best.svg">
+</p>
+
+## Installation
+
+### Python version support
+
+Officially Python 3.6 and above
+
+### Installing from PyPI
+
+PSOpt can be installed via pip from [PyPI](https://pypi.org/project/psopt)
+
+```  
+pip install psopt
+```
+
+### Installing from source
+
+Clone the repository via:
+
+```
+git clone https://github.com/artur-deluca/psopt/ --depth=1
+```
+
+Activate your virtual environment and run:
+
+```
+python setup.py install
+# or alternatively
+pip install -e .
+```
+
+If you wish to install the development dependencies, run:
+
+```
+python setup.py build
+# or alternatively
+pip install -e.[all]
+```
+
+### Running the test suite
+
+To run the tests written for psopt, make sure you have `pytest` installed in your venv. 
+Additionally, if you wish to run coverage analysis as well, make sure to have `pytest-cov` installed as well.
+
+```
+# to simply execute the tests run:
+pytest
+# to run coverage as well run:
+pytest --cov=psopt
+# or alternatively:
+make test
+```
+
