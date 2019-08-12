@@ -14,6 +14,8 @@ its documentation lives at [Read the Docs](https://psopt.readthedocs.io/en/lates
 the code on [GitHub](https://github.com/artur-deluca/psopt),
 and the latest release on [PyPI](https://pypi.org/project/psopt/).
 
+If you'd like to contribute to `psopt` you're most welcome. We've created a [little guide](CONTRIBUTING.md) to get you started!
+
 ## How to use
 ```python
 from psopt import Permutation
