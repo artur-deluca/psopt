@@ -60,3 +60,5 @@ html_theme = 'nature'
 html_static_path = ['_static']
 
 html_sidebars = { '**': ['sidebar/home.html', 'searchbox.html'] }
+
+master_doc = 'index'
