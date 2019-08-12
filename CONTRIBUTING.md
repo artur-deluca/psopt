@@ -11,7 +11,7 @@ There's a big button for that in GitHub interface, usually on the top right corn
 **2. Clone your fork of the repository**
 
 ```console
-$ git clone http://github.com/<YOUR-GITHUB-USERNAME>/serenata-de-amor.git
+$ git clone http://github.com/<YOUR-GITHUB-USERNAME>/psopt.git
 ```
 **3. Install dependencies**
 
@@ -48,4 +48,4 @@ $ git push origin <YOUR-GITHUB-USERNAME>-new-feature
 From your fork at GitHub usually there is a button to open pull requests.
 
 
-<sup><i>heavily inspired on: </i><a href="https://github.com/okfn-brasil/serenata-de-amor/blob/master/CONTRIBUTING.md">serenata de amor</a></sup>
+<sup><i>heavily inspired on: </i><a href="https://github.com/okfn-brasil/serenata-de-amor/blob/master/CONTRIBUTING.md">serenata de amor :heart:</a></sup>
