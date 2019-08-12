@@ -1,3 +1,17 @@
+"""
+===================================================
+Half-SAT problem
+===================================================
+
+Half-Sat Problem With Example
+
+Half-SAT = {F | F is a CNF formula with 2n variables and there is a satisfying assignment
+in which n variables are set to True and n variables are set to False}.
+
+`Half-SAT is NP-Hard <https://compquiz.blogspot.com/2010/06/half-sat-problem-with-example.html>`_
+
+"""
+
 import random
 from psopt import Combination
 

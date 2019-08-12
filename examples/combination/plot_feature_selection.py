@@ -1,3 +1,9 @@
+"""
+===================================================
+Feature selection
+===================================================
+"""
+
 from psopt import Combination
 
 # to run this, make sure to have scikit-learn installed
@@ -11,9 +17,11 @@ def main():
     # loading breast cancer dataset
     dataset = load_breast_cancer()
 
+    seed = 5
+
     # train-test split
     train_x, test_x, train_Y, test_Y = train_test_split(
-        dataset.data, dataset.target, test_size=0.2, random_state=1
+        dataset.data, dataset.target, test_size=0.2, random_state=seed
     )
 
     # create objective function
@@ -25,7 +33,7 @@ def main():
     opt = Combination(evaluate, list(range(train_x.shape[1])), labels=dataset.feature_names)
 
     # maximize obj function
-    result = opt.maximize(selection_size=15, verbose=True, max_iter=20)
+    result = opt.maximize(selection_size=15, verbose=True, max_iter=20, seed=seed)
 
     # result.solution will have the same effect if labels are not provided to the optimizer
     solution = [

@@ -1,3 +1,10 @@
+
+"""
+===================================================
+Constrained ordered sum of elements
+===================================================
+"""
+
 import random
 from psopt import Permutation
 

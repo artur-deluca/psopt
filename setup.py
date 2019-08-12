@@ -11,8 +11,12 @@ dev_requires = [
     "pytest",
     "pytest-cov",
     "flake8",
-    "codecov",
+    "codecov"
+]
+
+doc_requires = [
     "sphinx"
+    "sphinx-gallery"
 ]
 
 with open("README.md", "r") as fh:
@@ -21,7 +25,7 @@ with open("README.md", "r") as fh:
 setup(
     name="psopt",
     packages=find_packages(),
-    version="v0.0.1",
+    version="v0.1.0",
     author="Artur de Luca",
     author_email="arturbackdeluca@gmail.com",
     description="A particle swarm optimizer for general use",
@@ -32,8 +36,9 @@ setup(
     install_requires=install_requires,
 
     extras_require={
-        "dev": dev_requires,
-        "all": install_requires + dev_requires
+        "dev": install_requires + dev_requires,
+        "doc": install_requires + doc_requires,
+        "all": install_requires + dev_requires + doc_requires
     },
 
     classifiers=[

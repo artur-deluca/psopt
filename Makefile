@@ -43,6 +43,7 @@ test:
 # build documentation
 doc:
 	rm -rf docs/source/psopt/*.rst
+	rm -rf docs/source/auto_examples/
 	rm -f docs/source/*.rst
 	rm -rf docs/_build
 	# sphinx-autogen ./docs/source/*.rst

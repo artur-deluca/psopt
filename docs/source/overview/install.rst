@@ -50,7 +50,7 @@ If you wish to install the development dependencies, run:
     pip install -e.[all]
 
 
-See the :ref:`contributing guide <contributing>` for further information on contributing
+See the :ref:`contributing` for further information on contributing
 
 Running the test suite
 ----------------------

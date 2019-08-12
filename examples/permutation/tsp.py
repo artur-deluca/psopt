@@ -1,3 +1,9 @@
+"""
+=================================
+Travelling salesman problem (TSP)
+=================================
+"""
+
 import functools
 from psopt import Permutation
 

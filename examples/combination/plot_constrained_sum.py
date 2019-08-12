@@ -1,3 +1,10 @@
+"""
+===================================================
+Constrained sum of elements
+===================================================
+
+"""
+
 import random
 from psopt import Combination
 
