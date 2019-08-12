@@ -12,15 +12,21 @@ and the latest release on `PyPI <https://pypi.org/project/psopt/>`_.
 
 .. note:: PSOpt currently supports only combinatorial optimization.
 
+
+
 Overview
 ===============
 
- - :doc:`source/overview/install`
+.. toctree::
+
+    source/overview/install
+    source/overview/contributing
+
 
 API Reference
 -------------
 .. autosummary::
-   :toctree: source
+   :toctree:
 
    psopt.Combination
    psopt.Permutation
