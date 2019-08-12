@@ -48,7 +48,7 @@ class Optimizer:
         self._obj_func = obj_func
         self.n_candidates = len(candidates)
         self.labels = kwargs.get("labels", candidates)  # type: typing.Sequence
-        self.metrics = metrics.unpack_metrics(
+        self.metrics = metrics._unpack_metrics(
             kwargs.get("metrics", None)
         )  # type: typing.Optional[typing.Dict[typing.Text, typing.Callable]]
         if isinstance(constraints, dict):

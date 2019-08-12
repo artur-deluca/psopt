@@ -1,5 +1,5 @@
 import random
-from psopt.permutation import Permutation as optim
+from psopt import Permutation
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     }
 
     # instantiate the optimizer
-    opt = optim(obj_func, candidates, constraints=constraint, metrics="l2")
+    opt = Permutation(obj_func, candidates, constraints=constraint, metrics="l2")
 
     # define a threshold of acceptance for early convergence
     threshold = obj_func(sorted(candidates)[:selection_size])

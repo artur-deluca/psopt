@@ -1,5 +1,5 @@
 import random
-from psopt.permutation import Permutation as optim
+from psopt import Permutation
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     random.shuffle(candidates)
 
     # instantiate the optimizer
-    opt = optim(obj_func, candidates)
+    opt = Permutation(obj_func, candidates)
 
     # define a threshold of acceptance for early convergence
     target = obj_func(sorted(candidates))

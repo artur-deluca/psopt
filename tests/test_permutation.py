@@ -1,5 +1,5 @@
 import pytest
-from psopt.permutation import Permutation
+from psopt import Permutation
 from permutation import coSum, TSP
 
 

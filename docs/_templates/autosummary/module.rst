@@ -1,0 +1,5 @@
+{{ fullname }}
+==============
+
+.. automodule:: {{ fullname }}
+    :members:

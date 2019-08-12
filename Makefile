@@ -40,6 +40,15 @@ unbuild:
 test:
 	pytest --cov=psopt --verbose
 
+# build documentation
+doc:
+	rm -rf docs/source/psopt/*.rst
+	rm -f docs/source/*.rst
+	rm -rf docs/_build
+	# sphinx-autogen ./docs/source/*.rst
+	cd docs/ && $(MAKE) html
+	xdg-open docs/_build/html/index.html
+
 ## Set up python interpreter environment
 create_environment:
 ifeq (True,$(HAS_CONDA))

@@ -8,14 +8,17 @@ clsResults = typing.TypeVar("clsResults", bound="Results")
 
 
 class Results:
-    """Class to store the optimization results"""
+    """Class that stores the optimization results"""
 
-    class _History(dict):
-        def plot(
-            self,
-            y: typing.Union[typing.Text, typing.List[typing.Text]],
-            x: typing.Optional[typing.Text] = None,
-        ):
+    class History(dict):
+        def plot(self, y, x=None):
+            # type: (, typing.Union[typing.Text, typing.List[typing.Text]], typing.Optional[typing.Text])
+            """Plot any given measured characteristic recorded througout the optimization procedure
+
+            Args:
+                y (list or str): name of the metrics at the y-axis
+                x (str): name of the metrics for the x-axis.
+                    If empty, the horizontal axis will be the ``iterations``"""
 
             if isinstance(y, str):
                 y = [y]
@@ -35,16 +38,24 @@ class Results:
             plt.show()
 
     def __init__(self, *args, **kwargs):
-        self.history = self._History()
+        self._history = self.History()
         self.meta = dict()
         self.results = dict()
+    
+    @property
+    def history(self):
+        """A History object containing the recorded values of the global-best,
+            iteration best and any other metric specified"""
+        return self._history
 
     @property
     def solution(self):
+        """The solution found of within the given set of candidates"""
         return self.results["solution"]
 
     @property
     def value(self):
+        """The value associated with the solution found"""
         return self.results["value"]
 
     def load_history(self, directory: typing.Text, delete: bool):
