@@ -52,7 +52,7 @@ Officially Python 3.6 and above
 
 PSOpt can be installed via pip from [PyPI](https://pypi.org/project/psopt)
 
-```  
+```console
 pip install psopt
 ```
 
@@ -60,13 +60,13 @@ pip install psopt
 
 Clone the repository via:
 
-```
+```console
 git clone https://github.com/artur-deluca/psopt/ --depth=1
 ```
 
 Activate your virtual environment and run:
 
-```
+```console
 python setup.py install
 # or alternatively
 pip install -e .
@@ -74,7 +74,7 @@ pip install -e .
 
 If you wish to install the development dependencies, run:
 
-```
+```console
 python setup.py build
 # or alternatively
 pip install -e.[all]
@@ -85,7 +85,7 @@ pip install -e.[all]
 To run the tests written for psopt, make sure you have `pytest` installed in your venv. 
 Additionally, if you wish to run coverage analysis as well, make sure to have `pytest-cov` installed as well.
 
-```
+```console
 # to simply execute the tests run:
 pytest
 # to run coverage as well run:
