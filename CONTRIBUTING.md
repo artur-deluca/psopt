@@ -6,7 +6,7 @@ The discussions about any sort of problems or improvements take place in the [Is
 
 **1. _Fork_ this repository**
 
-There's a big button for that in GitHub interface, usually on the top right corner.
+There's a big button for that in the GitHub repository interface, usually on the top right corner.
 
 **2. Clone your fork of the repository**
 
@@ -39,7 +39,7 @@ $ git commit -am 'my contribution commit message'
 
 **7. Push to the branch to your fork**
 
-```consle
+```console
 $ git push origin <YOUR-GITHUB-USERNAME>-new-feature
 ```
 
