@@ -1,24 +1,40 @@
+"""
+=================================
+Travelling salesman problem (TSP)
+=================================
+
+
+.. note::example taken from `Google OR-Tools <https://developers.google.com/optimization/routing/tsp>`_
+
+The travelling salesman problem (TSP) concerns on finding the shortest
+possible route linking a given list of cities and their distances.
+
+The TSP is one of the most famous problems in computer science and it belongs to the class of NP-Complete problems.
+The Travelling salesman problem have many important applications, from route planning to the manufacture of microchips.
+But, in essence, it can be formulated as to find the minimum path that links each node in a weighted graph.
+
+.. image:: /images/tsp.svg
+
+Using ``psopt.Permutation`` we can generate many instances that use different paths. Then, those paths that have yielded the best results guide the other particles on finding better results throughout iterations. Below we see the progress of the algorithm:
+"""
+
 import functools
 from psopt import Permutation
 
 
-def get_route_cost(x, initial_cost, distance_matrix):
-
-    # define initial route cost
-    route_cost = initial_cost
-
-    for i in range(len(x) - 1):
-        route_cost += distance_matrix[x[i]][x[i + 1]]
-
-    return route_cost
-
-
 def main():
 
-    # define distances between 13 cities
-    # example taken from:
-    # [https://developers.google.com/optimization/routing/tsp]
+    def get_route_cost(x, initial_cost, distance_matrix):
 
+        # define initial route cost
+        route_cost = initial_cost
+
+        for i in range(len(x) - 1):
+            route_cost += distance_matrix[x[i]][x[i + 1]]
+
+        return route_cost
+
+    # define distances between 13 cities
     distance_matrix = [
         [0, 2451, 713, 1018, 1631, 1374, 2408, 213, 2571, 875, 1420, 2145, 1972],
         [2451, 0, 1745, 1524, 831, 1240, 959, 2596, 403, 1589, 1374, 357, 579],
@@ -47,7 +63,8 @@ def main():
     solution = opt.minimize(
         verbose=1, max_iter=50, population=15, early_stop=25, seed=0
     )
-    print(solution.solution)
+
+    solution.history.plot("global_best")
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ class Results:
                 x (str): name of the metrics for the x-axis.
                     If empty, the horizontal axis will be the ``iterations``"""
 
+            plt.figure(figsize=(8, 6))
             if isinstance(y, str):
                 y = [y]
 
@@ -41,7 +42,7 @@ class Results:
         self._history = self.History()
         self.meta = dict()
         self.results = dict()
-    
+
     @property
     def history(self):
         """A History object containing the recorded values of the global-best,

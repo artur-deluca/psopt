@@ -16,22 +16,24 @@ import numpy as np
 # =============================================================
 
 
-def hamming(source, target):
+def hamming(source, targets):
     """Calculates the Hamming distance between the particles position (source) and a given target.
     If no specific target is provided through functools.partial, target variable will be assigned to the global optimum position
 
     Returns:
         metrics observation at each iteration under attribute ``history`` on ``psopt.utils.Results`` object"""
-    return np.count_nonzero(source != target)
+    measurements = [np.count_nonzero(source != target) for target in targets]
+    return np.mean(measurements)
 
 
-def l2(source, target):
+def l2(source, targets):
     """Calculates the L2-Norm between the particles position (source) and a given target.
     If no specific target is provided through functools.partial, target variable will be assigned to the global optimum position
 
     Returns:
         metrics observation at each iteration under attribute ``history`` on ``psopt.utils.Results`` object"""
-    return np.linalg.norm(np.array(source) - np.array(target))
+    measurements = [np.linalg.norm(np.array(source) - np.array(target)) for target in targets]
+    return np.mean(measurements)
 
 
 # =============================================================
@@ -49,7 +51,7 @@ def _unpack_metrics(selected_metrics: M) -> typing.Dict[typing.Text, typing.Call
     if isinstance(selected_metrics, str):
         metrics_dict.update({selected_metrics: reference[selected_metrics]})
 
-    elif inspect.isfunction(selected_metrics):
+    elif inspect.isfunction(selected_metrics) or inspect.isbuiltin(selected_metrics):
         metrics_dict.update({selected_metrics.__name__: selected_metrics})
 
     elif isinstance(selected_metrics, list):

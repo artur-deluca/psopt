@@ -19,18 +19,19 @@ and the latest release on `PyPI <https://pypi.org/project/psopt/>`_.
 [1] Hu, X. (2006). Particle Swarm Optimization <http://www.swarmintelligence.org/>
 
 Overview
-===============
+========
 
 .. toctree::
 
     source/overview/install
+    source/auto_examples/index
     source/overview/contributing
 
 
 API Reference
 -------------
 .. autosummary::
-   :toctree:
+   :toctree: source/psopt
 
    psopt.Combination
    psopt.Permutation

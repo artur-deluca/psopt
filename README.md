@@ -35,11 +35,12 @@ opt = Permutation(obj_func, candidates, metrics="l2")
 result = opt.minimize(selection_size=5, verbose=1, threshold=5, population=20)
 
 # visualize the progress
-#result.history.plot("l2")
+result.history.plot("l2")
 result.history.plot("global_best")
 ```
 
-<p>
+<p align="center">
+  <img width="400" height="300" src="/docs/images/l2.svg">
   <img width="400" height="300" src="/docs/images/global_best.svg">
 </p>
 

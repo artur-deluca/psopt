@@ -12,6 +12,7 @@
 #
 import os
 import sys
+import psopt
 sys.path.insert(0, os.path.abspath('.'))
 
 
@@ -22,7 +23,7 @@ copyright = '2019, Artur Back de Luca'
 author = 'Artur Back de Luca'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = psopt.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,6 +35,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx_gallery.gen_gallery',
 ]
 
 autosummary_generate = True
@@ -59,6 +61,12 @@ html_theme = 'nature'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_sidebars = { '**': ['sidebar/home.html', 'searchbox.html'] }
+html_sidebars = {'**': ['sidebar/home.html', 'searchbox.html', 'sourcelink.html']}
 
 master_doc = 'index'
+
+sphinx_gallery_conf = {
+     'examples_dirs': '../examples',
+     'gallery_dirs': 'source/auto_examples',
+     'download_all_examples': False,
+}
