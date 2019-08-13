@@ -15,7 +15,7 @@ dev_requires = [
 ]
 
 doc_requires = [
-    "sphinx"
+    "sphinx",
     "sphinx-gallery"
 ]
 
