@@ -3,12 +3,15 @@
 Half-SAT problem
 ===================================================
 
-Half-Sat Problem With Example
+The Half-SAT problem can be defined as:
 
-Half-SAT = {F | F is a CNF formula with 2n variables and there is a satisfying assignment
-in which n variables are set to True and n variables are set to False}.
+.. math::
 
-`Half-SAT is NP-Hard <https://compquiz.blogspot.com/2010/06/half-sat-problem-with-example.html>`_
+    \\text{HALF-SAT} = \\{ \\varphi \\mid \\varphi \\text{ is a formula which is satisfied by half of all assignments }\\}
+
+Or, in other words, considering a CNF formula with :math:`2n` variables, an there's a satisfying assignment in which :math:`n` variables are ``True`` and :math:`n` variables are ``False``.
+The Half-SAT problem is known to be `NP-Hard <https://en.wikipedia.org/wiki/NP-hardness>`_, so it cannot be solved in polynomial time.
+In these situations the Particle Swarm Algorithm can sometimes reach optimal results in an feasible amount of time
 
 """
 
@@ -17,6 +20,21 @@ from psopt import Combination
 
 
 def generate_cnf(n_vars, clauses, k=3, seed=None):
+    """
+    This function generates a random CNF formula for the Half-SAT problem
+
+    Args:
+        n_vars (int): the number of variables in the formula
+
+        clauses (int): the number of clauses that compose the formula
+
+        k (int, optional): the number of variables in each clause. Defaults to 3
+
+        seed (int, optional): Seed the function generator
+
+    Returns:
+        cnf (callable): a function in CNF for the Half-SAT problem
+    """
     # seed value for testing purposes
     random.seed(seed)
     # start expression

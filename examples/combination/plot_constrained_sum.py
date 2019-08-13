@@ -1,8 +1,12 @@
 """
-===================================================
+===========================
 Constrained sum of elements
-===================================================
+===========================
 
+From a shuffled set of integers, find the numbers that minimize the sum of
+5 (five) elements, so that the result is also an odd number
+
+In this case, since the objective function is the sum of the elements, the order doesn't matter, so we use the ``Combination`` optimizer.
 """
 
 import random

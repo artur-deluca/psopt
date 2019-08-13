@@ -115,19 +115,19 @@ class Optimizer:
             exit_flag = self._update_best()
 
             # Logging iteration
+            iteration_best_index = np.argmax(self._particles[-2]["value"])
             message = "Iteration {}:\n".format(iteration)
-
             metric_results = {
-                "global_best": self._m * self._global_best[-2]["value"],
-                "iteration_best": self._m * max(self._particles[-2]["value"]),
+                "global_best": self._m * self._global_best[-2]["value"] - self._attend_constraints(self._global_best[-2]["position"]),
+                "iteration_best": self._m * self._particles[-2]["value"][iteration_best_index] - self._attend_constraints(self._particles[-2]["position"][iteration_best_index])
             }
 
             # Log metric results
-            metric_results = {**metric_results, **self._calculate_metrics(pool=pool)}
+            metric_results = {**metric_results, **self._calculate_metrics()}
 
             message += "".join(
                 [
-                    "   {}: {:.3f}".format(key.replace("_", " "), value)
+                    "   {}: {:.3f}".format(key, value)
                     for key, value in metric_results.items()
                 ]
             )
@@ -147,9 +147,7 @@ class Optimizer:
                 self._global_best.pop(0)
 
             # Stopping criteria
-            unique = np.unique(self._particles[-1]["position"])
-
-            if len(unique) == self.swarm_population - 1:
+            if len(np.unique(self._particles[-1]["position"], axis=0)) == 1:
                 exit_flag = 3
                 break
             else:
@@ -199,6 +197,9 @@ class Optimizer:
 
         return solution
 
+    def _attend_constraints(self, particle):
+        return self._penalty * evaluate_constraints(self.constraints, self._get_particle(particle))
+
     def _evaluate_particles(self, pool):
         params = [
             {
@@ -238,7 +239,7 @@ class Optimizer:
 
         # Temporarily set the best particle values and
         # position as the most recent iteration
-        self._particles_best[-2] = self._particles[-2]
+        self._particles_best[-2] = self._particles[-2].copy()
 
         # Get the last 3 particle best values for each particle
         all_values = np.array([i["value"] for i in self._particles_best[-4:-1]])
@@ -372,21 +373,20 @@ class Optimizer:
 
         self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
 
-    def _calculate_metrics(self, pool):
+    def _calculate_metrics(self):
 
         metric_results = dict()  # set dict to store the results
+        positions = [self._get_particle(i) for i in self._particles[-2]["position"]]
         for name, func in self.metrics.items():
 
             # if the number of parameters is equal 2, partially complete it
             # with the global best at current iteration
             number_of_param = len(inspect.signature(func).parameters)
             if number_of_param == 2:
-                func = functools.partial(func, self._global_best[-2]["position"])
+                func = functools.partial(func, self._get_particle(self._global_best[-2]["position"]))
 
             # calculate metrics
-            metric_results[name] = np.mean(
-                pool.map(func, self._particles[-2]["position"])
-            )
+            metric_results[name] = func(positions)
 
         return metric_results
 

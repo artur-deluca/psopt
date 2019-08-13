@@ -61,7 +61,7 @@ html_theme = 'nature'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_sidebars = {'**': ['sidebar/home.html', 'searchbox.html']}
+html_sidebars = {'**': ['sidebar/home.html', 'searchbox.html', 'sourcelink.html']}
 
 master_doc = 'index'
 
