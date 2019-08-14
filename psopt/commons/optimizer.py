@@ -1,5 +1,6 @@
 import functools
 import inspect
+import random
 import time
 import typing
 import warnings
@@ -18,11 +19,22 @@ List = typing.List[Dict]
 
 
 class MockPool():
-    def map(self, fn, x):
+    """
+    Class to mock `multiprocessing.Pool` class to avoid
+    plickling issues when building documentation but
+    also to improve speed
+    """
+
+    @staticmethod
+    def map(fn, x):
         return list(map(fn, x))
-    def close(self):
+
+    @staticmethod
+    def close():
         pass
-    def join(self):
+
+    @staticmethod
+    def join():
         pass
 
 
@@ -94,14 +106,18 @@ class Optimizer:
     def _optimize(self):
 
         start = time.time()
-        pool = MockPool()
+        if self._n_jobs == 1:
+            pool = multiprocess.Pool(self._n_jobs)
+        else:
+            pool = MockPool()
 
         # Initialize storage arrays
         self._init_storage_fields()
 
         # Generate particles
         iteration = 0
-        self._generate_particles(pool, get_seeds(self.swarm_population))
+        seeds = get_seeds(self.swarm_population)
+        self._generate_particles(pool, seeds)
 
         while iteration < self._max_iter:
 
@@ -127,8 +143,8 @@ class Optimizer:
             iteration_best_index = np.argmax(self._particles[-2]["value"])
             message = "Iteration {}:\n".format(iteration)
             metric_results = {
-                "global_best": self._m * self._global_best[-2]["value"] - self._attend_constraints(self._global_best[-2]["position"]),
-                "iteration_best": self._m * self._particles[-2]["value"][iteration_best_index] - self._attend_constraints(self._particles[-2]["position"][iteration_best_index])
+                "global_best": self._m * self._global_best[-2]["value"],
+                "iteration_best": self._m * self._particles[-2]["value"][iteration_best_index]
             }
 
             # Log metric results
@@ -146,7 +162,8 @@ class Optimizer:
             if exit_flag:
                 break
 
-            self._update_components(pool, get_seeds(self.swarm_population))
+            seeds = get_seeds(self.swarm_population)
+            self._update_components(pool, seeds)
 
             # Remove unnecessary and used storage arrays
             # TODO: Record all the iterations for future debugging purposes
@@ -205,9 +222,6 @@ class Optimizer:
         self._logger.info("Best evaluation: {}".format(solution.value))
 
         return solution
-
-    def _attend_constraints(self, particle):
-        return self._penalty * evaluate_constraints(self.constraints, self._get_particle(particle))
 
     def _evaluate_particles(self, pool):
         params = [
@@ -338,7 +352,7 @@ class Optimizer:
             self._n_jobs = multiprocess.cpu_count() - 1
 
         self._seed = kwargs.get("seed", None)
-        np.random.seed(self._seed)
+        random.seed(self._seed)
 
     @property
     def metadata(self):
@@ -416,9 +430,11 @@ class Optimizer:
         # global_best[iteration][position or value]
         self._global_best = [self._template_global.copy()]
 
+    
     def _generate_particles(self, pool, seeds):
         pass
 
+    
     def _update_components(self, pool, seeds):
         pass
 

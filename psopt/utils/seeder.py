@@ -1,6 +1,6 @@
-import numpy as np
+import random
 
 
 def get_seeds(size):
-    seeds = list(np.random.randint(size * 100, size=size))
+    seeds = random.sample(list(range(size * 1000)), size)
     return seeds
