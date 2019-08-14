@@ -418,6 +418,3 @@ class Optimizer:
 
     def _get_labels(self, position):
         pass
-
-    def __getstate__(self):
-        return None
