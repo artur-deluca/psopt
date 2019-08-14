@@ -77,7 +77,7 @@ class Permutation(Optimizer):
         return candidates
 
     # ====================== Update methods ==========================
-    @reset_random_state
+
     def _update_components(self, pool, seeds):
         params = [
             {
@@ -107,9 +107,9 @@ class Permutation(Optimizer):
         rand = random.Random(params["seed"])
 
         # retrieving positions for the calculation
-        particle = params["particle"]
-        pbest = params["pbest"]
-        gbest = params["gbest"]
+        particle = params["particle"].copy()
+        pbest = params["pbest"].copy()
+        gbest = params["gbest"].copy()
 
         if rand.random() < params["w"]:
             particle = Permutation._mutate(
