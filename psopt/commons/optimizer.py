@@ -17,15 +17,6 @@ Dict = typing.Dict[typing.Text, typing.Any]
 List = typing.List[Dict]
 
 
-class MockPool():
-    def map(self, fn, x):
-        return list(map(fn, x))
-    def close(self):
-        pass
-    def join(self):
-        pass
-
-
 class Optimizer:
     """Optimizer parent class
 
@@ -94,7 +85,7 @@ class Optimizer:
     def _optimize(self):
 
         start = time.time()
-        pool = MockPool()
+        pool = multiprocess.Pool(self._n_jobs)
 
         # Initialize storage arrays
         self._init_storage_fields()
