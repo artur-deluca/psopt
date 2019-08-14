@@ -4,6 +4,7 @@ import typing
 import numpy as np
 
 from psopt.commons import Optimizer
+from psopt.utils import reset_random_state
 
 
 class Permutation(Optimizer):
@@ -55,6 +56,7 @@ class Permutation(Optimizer):
             obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs
         )
 
+    @reset_random_state
     def _generate_particles(self, pool, seeds: typing.List[int]):
         params = [
             {
@@ -70,14 +72,12 @@ class Permutation(Optimizer):
 
     @staticmethod
     def _generate_candidate(params: typing.Dict[str, int]) -> typing.List[int]:
-        np.random.seed(params["seed"])
-        candidates = np.random.permutation(np.arange(params["n_candidates"]))
-        candidates = candidates[: params["selection_size"]]
-
+        rand = random.Random(params["seed"])
+        candidates = rand.sample(list(range(params["n_candidates"])), params["selection_size"])
         return candidates
 
     # ====================== Update methods ==========================
-
+    @reset_random_state
     def _update_components(self, pool, seeds):
         params = [
             {
@@ -104,51 +104,49 @@ class Permutation(Optimizer):
     @staticmethod
     def _update_candidate(params: typing.Dict[str, typing.Any]):
 
-        np.random.seed(params["seed"])
+        rand = random.Random(params["seed"])
 
         # retrieving positions for the calculation
         particle = params["particle"]
         pbest = params["pbest"]
         gbest = params["gbest"]
 
-        if np.random.random() < params["w"]:
+        if rand.random() < params["w"]:
             particle = Permutation._mutate(
-                particle, params["selection_size"], params["n_candidates"]
+                rand, particle, params["selection_size"], params["n_candidates"]
             )
 
-        if np.random.random() < params["c1"]:
-            particle = Permutation._crossover(particle, pbest)
-        if np.random.random() < params["c2"]:
-            particle = Permutation._crossover(particle, gbest)
+        if rand.random() < params["c1"]:
+            particle = Permutation._crossover(rand, particle, pbest)
+        if rand.random() < params["c2"]:
+            particle = Permutation._crossover(rand, particle, gbest)
 
-        particle = particle.astype(int)
+        particle = list(map(int, particle))
 
         return particle
 
     @staticmethod
     def _mutate(
-        p: typing.List[int], selection_size: int, n_candidates: int
+        rand, p: typing.List[int], selection_size: int, n_candidates: int
     ) -> typing.List[int]:
         """Performs a swap mutation with the remaining available itens"""
         if len(p) > 1:
             # get random slice
-            _slice = np.random.permutation(selection_size)[:2]
+            _slice = rand.sample(list(range(selection_size)), 2)
             start, finish = min(_slice), max(_slice)
             p_1 = np.append(p[0:start], p[finish:])
             p_2 = list(set(range(n_candidates)) - set(p_1))
-            p[start:finish] = np.random.choice(
-                p_2, size=len(p[start:finish]), replace=False
-            )
+            p[start:finish] = rand.sample(p_2, len(p[start:finish]))
         return p
 
     @staticmethod
-    def _crossover(p_1: typing.List[int], p_2: typing.List[int]) -> typing.List[int]:
+    def _crossover(rand, p_1: typing.List[int], p_2: typing.List[int]) -> typing.List[int]:
         """Performs the PTL Crossover between two sequences"""
 
         indexes = list(range(len(p_1)))
         if len(p_1) == len(p_2) and len(p_1) > 1:
             # get random slice from the first array
-            _slice = np.random.permutation(indexes)[:2]
+            _slice = rand.sample(indexes, 2)
             start, finish = min(_slice), max(_slice)
             p_1 = p_1[start:finish]
 
@@ -161,7 +159,7 @@ class Permutation(Optimizer):
 
             # create the two possible combinations
             p_1, p_2 = np.append(p_1, p_2), np.append(p_2, p_1)
-        return [p_1, p_2][np.random.randint(0, 2)]
+        return [p_1, p_2][rand.randint(0, 1)]
 
     # ===================== Retrival methods =========================
 
