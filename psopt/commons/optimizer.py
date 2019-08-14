@@ -13,7 +13,6 @@ from psopt.utils import evaluate_constraints
 from psopt.utils import metrics
 from psopt.utils import Results
 from psopt.utils import get_seeds
-from psopt.utils import reset_random_state
 
 Dict = typing.Dict[typing.Text, typing.Any]
 List = typing.List[Dict]
@@ -107,7 +106,7 @@ class Optimizer:
     def _optimize(self):
 
         start = time.time()
-        if self._n_jobs > 1:
+        if self._n_jobs == 1:
             pool = multiprocess.Pool(self._n_jobs)
         else:
             pool = MockPool()
@@ -397,7 +396,6 @@ class Optimizer:
 
         self._logger.info("Exit code {}: {}".format(flag, exit_flag[flag]))
 
-    @reset_random_state
     def _calculate_metrics(self):
 
         metric_results = dict()  # set dict to store the results
@@ -432,11 +430,11 @@ class Optimizer:
         # global_best[iteration][position or value]
         self._global_best = [self._template_global.copy()]
 
-    @reset_random_state
+    
     def _generate_particles(self, pool, seeds):
         pass
 
-    @reset_random_state
+    
     def _update_components(self, pool, seeds):
         pass
 

@@ -4,7 +4,6 @@ import typing
 import numpy as np
 
 from psopt.commons import Optimizer
-from psopt.utils import reset_random_state
 
 
 class Permutation(Optimizer):
@@ -56,7 +55,6 @@ class Permutation(Optimizer):
             obj_func=obj_func, candidates=candidates, constraints=constraints, **kwargs
         )
 
-    @reset_random_state
     def _generate_particles(self, pool, seeds: typing.List[int]):
         params = [
             {
