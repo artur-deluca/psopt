@@ -106,7 +106,7 @@ class Optimizer:
     def _optimize(self):
 
         start = time.time()
-        if self._n_jobs == 1:
+        if self._n_jobs > 1:
             pool = multiprocess.Pool(self._n_jobs)
         else:
             pool = MockPool()
