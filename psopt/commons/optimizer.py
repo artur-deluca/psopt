@@ -1,5 +1,6 @@
 import functools
 import inspect
+import random
 import time
 import typing
 import warnings
@@ -15,6 +16,26 @@ from psopt.utils import get_seeds
 
 Dict = typing.Dict[typing.Text, typing.Any]
 List = typing.List[Dict]
+
+
+class MockPool():
+    """
+    Class to mock `multiprocessing.Pool` class to avoid
+    plickling issues when building documentation but
+    also to improve speed
+    """
+
+    @staticmethod
+    def map(fn, x):
+        return list(map(fn, x))
+
+    @staticmethod
+    def close():
+        pass
+
+    @staticmethod
+    def join():
+        pass
 
 
 class Optimizer:
