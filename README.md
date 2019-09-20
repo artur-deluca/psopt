@@ -5,6 +5,7 @@
 [![codecov](https://codecov.io/gh/artur-deluca/psopt/branch/master/graph/badge.svg)](https://codecov.io/gh/artur-deluca/psopt)
 [![Maintainability](https://api.codeclimate.com/v1/badges/e969d457f95dca89cb31/maintainability)](https://codeclimate.com/github/artur-deluca/psopt/maintainability)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/71b0d894f71f4c7c9f14409d14b11856)](https://www.codacy.com/app/artur-deluca/psopt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=artur-deluca/psopt&amp;utm_campaign=Badge_Grade)
+[![DOI](https://zenodo.org/badge/176614089.svg)](https://zenodo.org/badge/latestdoi/176614089)
 
 A particle swarm optimizer for combinatorial optimization
 
