@@ -7,7 +7,13 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/71b0d894f71f4c7c9f14409d14b11856)](https://www.codacy.com/app/artur-deluca/psopt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=artur-deluca/psopt&amp;utm_campaign=Badge_Grade)
 [![DOI](https://zenodo.org/badge/176614089.svg)](https://zenodo.org/badge/latestdoi/176614089)
 
-A particle swarm optimizer for combinatorial optimization
+A particle swarm optimizer for discrete optimization
+
+<p align="center">
+  <img width="400" height="300" src="/docs/images/obj_fn.svg">
+  <img width="400" height="300" src="/docs/images/pso_performance.gif">
+</p>
+
 
 ## Project Information
 
